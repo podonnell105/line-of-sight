@@ -21,6 +21,11 @@ pip install -r requirements.txt
 - The script computes which addresses are within a user-defined buffer of the rail, and assigns a LOS score (1 = clear sight, 0 = blocked by a building).
 - Results are saved as a CSV and a map in the `output/` directory.
 
+## Data Sources
+- **Rail Lines**: The rail line data (`data/shapefiles/tl_2022_us_rails.*`) comes from the U.S. Census Bureau's TIGER/Line Shapefiles (2022). These files contain the national rail network data and are used as the base layer for rail line analysis. (`https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer`)
+- **Addresses**: User-provided data from OpenAddresses (`https://batch.openaddresses.io/data#map=0/0/0`), saved as `data/addresses.geojson`
+- **Building Footprints**: Automatically fetched from OpenStreetMap (OSM)
+
 ## What you need to do
 
 ### 1. **Download addresses for your area**
@@ -57,5 +62,4 @@ python src/address_los_score.py
 ## Notes
 - The workflow is fully automated except for downloading the address file from OpenAddresses.
 - You can change the AOI, buffer, and other parameters as needed.
-- For best results, ensure all data uses the WGS84 (EPSG:4326) coordinate system. # address-line-of-sight-to-railway
-# line-of-sight
+- For best results, ensure all data uses the WGS84 (EPSG:4326) coordinate system.
