@@ -58,3 +58,4 @@ python src/address_los_score.py
 - The workflow is fully automated except for downloading the address file from OpenAddresses.
 - You can change the AOI, buffer, and other parameters as needed.
 - For best results, ensure all data uses the WGS84 (EPSG:4326) coordinate system. # address-line-of-sight-to-railway
+# line-of-sight
