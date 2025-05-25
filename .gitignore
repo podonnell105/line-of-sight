@@ -1,1 +1,5 @@
 .venv/
+
+# Large data files
+data/shapefiles/tl_2022_us_rails.shp
+data/addresses.geojson
