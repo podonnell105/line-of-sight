@@ -1,65 +1,184 @@
-# Rail and Address Line-of-Sight (LOS) Analysis
+# Line of Sight Analysis Tool
 
-This workflow identifies addresses near rail lines and scores their line-of-sight (LOS) to the rail, considering building obstructions. All outputs are saved in the `output/` directory.
+This tool analyzes line of sight between addresses and rail lines using LiDAR data, taking into account buildings, trees, and other obstructions.
 
-**Before running your own analysis, delete any example files in the `output/` directory and the example `data/addresses.geojson` file.**
-This ensures you are working with your own data and results.
+## Prerequisites
 
-## Installation
+- Python 3.8 or higher
+- pip (Python package installer)
+- Git
 
-All required Python packages are listed in `requirements.txt`.
+## Setup Instructions
 
-Install them with:
-```sh
-pip install -r requirements.txt
-```
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd line-of-sight
+   ```
 
-## How it works
-- **Rail lines** are fetched from the FRA MainLine MapServer for your area of interest.
-- **Addresses** must be downloaded by the user from OpenAddresses and saved as `data/addresses.geojson`.
-- **Building footprints** are automatically fetched from OpenStreetMap (OSM) for your area and saved as `output/building_footprints.geojson`.
-- The script computes which addresses are within a user-defined buffer of the rail, and assigns a LOS score (1 = clear sight, 0 = blocked by a building).
-- Results are saved as a CSV and a map in the `output/` directory.
+2. **Create and activate a virtual environment**
+   ```bash
+   # For macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+
+   # For Windows
+   python -m venv venv
+   .\venv\Scripts\activate
+   ```
+
+3. **Install required packages**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set up OpenTopography API Key**
+   - Go to https://portal.opentopography.org/
+   - Create an account or log in
+   - Request an API key from your profile
+   - Create a `.env` file in the project root directory:
+     ```bash
+     # Create and open .env file
+     touch .env
+     nano .env  # or use your preferred text editor
+     ```
+   - Add your API key to the `.env` file:
+     ```
+     OPENTOPOGRAPHY_API_KEY=your_api_key_here
+     ```
+   - Save and close the file
 
 ## Data Sources
 - **Rail Lines**: The rail line data (`data/shapefiles/tl_2022_us_rails.*`) comes from the U.S. Census Bureau's TIGER/Line Shapefiles (2022). These files contain the national rail network data and are used as the base layer for rail line analysis. (`https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer`)
 - **Addresses**: User-provided data from OpenAddresses (`https://batch.openaddresses.io/data#map=0/0/0`), saved as `data/addresses.geojson`
 - **Building Footprints**: Automatically fetched from OpenStreetMap (OSM)
+- **LiDAR Data**: 
+  - Source: OpenTopography API (USGS 3DEP 10m resolution data)
+  - Used to analyze terrain, vegetation, and buildings that might obstruct line of sight
+  - The tool automatically:
+    1. Fetches LiDAR data for your analysis area
+    2. Processes elevation data to identify:
+       - Trees (high local variance, moderate slope)
+       - Shrubs (moderate local variance, moderate slope)
+       - Buildings (high local variance, very high slope)
+    3. Uses this information to calculate line-of-sight scores between addresses and rail lines
+  - Note: LiDAR coverage may vary by region. The tool will notify you if data is unavailable for your area.
 
 ## What you need to do
 
-### 1. **Download addresses for your area**
-- Go to [OpenAddresses Data](https://batch.openaddresses.io/data#map=0/0/0)
-- Use Ctrl+F to search for your city, county, or region.
-- Download the dataset (preferably as GeoJSON, or convert to GeoJSON).
-- Save the file as `data/addresses.geojson` in your project directory.
-- **Delete any example `addresses.geojson` file before adding your own.**
+## Running the Application
 
-### 2. **Set your analysis parameters**
-Edit the top of `src/address_los_score.py` to set:
-- `center_lat` and `center_lon`: the center of your area of interest (in decimal degrees)
-- `radius_km`: the radius (in kilometers) around the center to analyze
-- `rail_buffer_m`: the buffer distance (in meters) from the rail line to consider addresses "nearby"
+1. **Start the Flask server**
+   ```bash
+   python src/app.py
+   ```
 
-Example:
-```python
-center_lat, center_lon = 41.87825, -87.62975
-radius_km = 1.0
-rail_buffer_m = 100
-```
+2. **Access the web interface**
+   - Open your web browser
+   - Navigate to `http://localhost:5000`
 
-### 3. **Run the script**
-```sh
-python src/address_los_score.py
-```
-- The script will automatically fetch building footprints for your area from OSM if not already present in `output/building_footprints.geojson`.
-- All outputs will be saved in the `output/` directory:
-  - `output/building_footprints.geojson`: Building footprints for your area
-  - `output/address_los_scores.csv`: Addresses near rail with LOS scores
-  - `output/address_los_scores.png`: Map visualization
-- **Delete any example files in the `output/` directory before running your own analysis.**
+## Using the Web Interface
 
-## Notes
-- The workflow is fully automated except for downloading the address file from OpenAddresses.
-- You can change the AOI, buffer, and other parameters as needed.
-- For best results, ensure all data uses the WGS84 (EPSG:4326) coordinate system.
+1. **Upload Address Data**
+   - Prepare a GeoJSON file containing address points
+   - Click "Choose File" and select your GeoJSON file
+   - Click "Upload"
+
+2. **Configure Analysis**
+   - Enter the center coordinates (latitude and longitude)
+   - Set the analysis radius (in kilometers)
+   - Configure rail buffer distance (in meters)
+   - Set shrub height threshold (in meters)
+   - Click "Analyze"
+
+3. **View Results**
+   - The analysis will show:
+     - Clear LOS addresses (green markers)
+     - Blocked LOS addresses (red markers)
+     - Rail lines (yellow lines)
+     - Buildings (gray polygons)
+   - Download the results:
+     - PNG plot of the analysis
+     - CSV file of clear LOS addresses
+
+## Running the Analysis Manually
+
+If you prefer to run the analysis directly using Python instead of the web interface:
+
+1. **Prepare your data**
+   ```bash
+   # Create necessary directories
+   mkdir -p data/shapefiles
+   mkdir -p output
+   ```
+
+2. **Set up your analysis parameters**
+   Edit `src/address_los_score_lidar.py` and modify these variables at the top:
+   ```python
+   # Analysis area center point
+   center_lat = 41.87825  # Example: Chicago
+   center_lon = -87.62975
+   
+   # Analysis parameters
+   radius_km = 1.0        # Radius around center point to analyze
+   rail_buffer_m = 100    # Distance from rail to consider addresses "nearby"
+   shrub_height_threshold = 2.0  # Minimum height (meters) for shrubs to block LOS
+   ```
+
+3. **Run the analysis**
+   ```bash
+   python src/address_los_score_lidar.py
+   ```
+
+4. **View the results**
+   The script will generate:
+   - `output/address_los_scores_lidar_[timestamp].png`: Map visualization
+   - `output/clear_los_addresses_[timestamp].csv`: List of addresses with clear LOS
+   - `output/building_footprints.geojson`: Building footprints for the area
+
+5. **Customize the analysis**
+   You can modify these key functions in `src/address_los_score_lidar.py`:
+   ```python
+   def calculate_los_score(bbox, address_point, rail_point, elevation, tree_mask, shrub_mask, building_mask):
+       # Adjust these thresholds to change sensitivity
+       SHRUB_HEIGHT_THRESHOLD = 2.0  # meters
+       ELEVATION_CHANGE_THRESHOLD = 5.0  # meters
+       
+       # Your custom logic here
+       ...
+
+   def analyze_vegetation(tif_file):
+       # Modify vegetation detection parameters
+       window_size = 3  # Size of window for local variance calculation
+       tree_threshold = 75  # Percentile for tree detection
+       shrub_threshold = 50  # Percentile for shrub detection
+       ...
+
+   def process_lidar_data(tif_file):
+       # Change how LiDAR data is processed
+       ...
+   ```
+
+6. **Troubleshooting manual runs**
+   - Ensure your OpenTopography API key is set in the environment
+   - Check that your input GeoJSON is in WGS84 (EPSG:4326) coordinates
+   - Verify the analysis area has LiDAR coverage
+   - Monitor the console output for any error messages
+
+## Troubleshooting
+
+1. **API Key Issues**
+   - Verify the API key is set correctly: `echo $OPENTOPOGRAPHY_API_KEY`
+   - Check OpenTopography account status
+   - Ensure you have sufficient API credits
+
+2. **Package Installation Issues**
+   - Update pip: `python -m pip install --upgrade pip`
+   - Try installing packages individually if batch install fails
+   - Check Python version compatibility
+
+3. **Analysis Errors**
+   - Verify input GeoJSON format
+   - Check coordinate system (should be WGS84)
+   - Ensure analysis area is within available LiDAR coverage
+
