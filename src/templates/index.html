@@ -269,6 +269,8 @@
                             const lines = csvText.split('\n');
                             const header = lines[0].split(',');
                             const geomIdx = header.findIndex(h => h === 'geometry');
+                            const numIdx = header.findIndex(h => h === 'number');
+                            const streetIdx = header.findIndex(h => h === 'street');
                             for (let i = 1; i < lines.length; i++) {
                                 const row = lines[i].split(',');
                                 if (row.length < 2) continue;
@@ -283,15 +285,51 @@
                                         const wgs84 = proj4('EPSG:3857', 'EPSG:4326', [x, y]);
                                         lon = wgs84[0];
                                         lat = wgs84[1];
-                        }
+                                    }
                                 }
                                 if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
-                                    L.circleMarker([lat, lon], {
+                                    // Create a marker with the address data
+                                    const marker = L.circleMarker([lat, lon], {
                                         radius: 5,
                                         color: 'lime',
                                         fillColor: 'lime',
                                         fillOpacity: 0.8
-                                    }).addTo(clearPoints);
+                                    });
+                                    
+                                    // Add address data to the marker
+                                    const number = numIdx !== -1 ? row[numIdx].replace(/^"(.*)"$/, '$1') : '';
+                                    const street = streetIdx !== -1 ? row[streetIdx].replace(/^"(.*)"$/, '$1') : '';
+                                    const address = number && street ? `${number} ${street}` : '';
+                                    marker.address = address;
+                                    marker.coordinates = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                                    
+                                    // Add right-click handler
+                                    marker.on('contextmenu', function(e) {
+                                        e.originalEvent.preventDefault(); // Prevent default context menu
+                                        
+                                        // Create the text to copy - just raw data without labels
+                                        const textToCopy = address ? `${address} ${marker.coordinates}` : marker.coordinates;
+                                        
+                                        // Copy to clipboard
+                                        navigator.clipboard.writeText(textToCopy).then(() => {
+                                            // Show a temporary tooltip to confirm copy
+                                            const tooltip = L.tooltip()
+                                                .setContent('Copied to clipboard!')
+                                                .setLatLng(e.latlng);
+                                            
+                                            marker.bindTooltip(tooltip).openTooltip();
+                                            
+                                            // Remove tooltip after 2 seconds
+                                            setTimeout(() => {
+                                                marker.closeTooltip();
+                                            }, 2000);
+                                        }).catch(err => {
+                                            console.error('Failed to copy text: ', err);
+                                            alert('Failed to copy to clipboard');
+                                        });
+                                    });
+                                    
+                                    marker.addTo(clearPoints);
                                 }
                             }
                         });

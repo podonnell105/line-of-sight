@@ -235,6 +235,11 @@ def analyze():
         logger.info("Loading and filtering addresses...")
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
         gdf = gpd.read_file(addr_path)
+        # Ensure number and street fields exist
+        if 'properties' in gdf.columns:
+            # Try to extract number and street from properties if they exist
+            gdf['number'] = gdf['properties'].apply(lambda x: x.get('number', '') if isinstance(x, dict) else '')
+            gdf['street'] = gdf['properties'].apply(lambda x: x.get('street', '') if isinstance(x, dict) else '')
         bbox_geom = box(min_lon, min_lat, max_lon, max_lat)
         addr_gdf = gdf[gdf.geometry.within(bbox_geom)].copy()
         
@@ -311,6 +316,10 @@ def analyze():
         # Save clear LOS addresses CSV
         clear_los_path = os.path.join(WEB_OUTPUT_DIR, f'clear_los_addresses_{timestamp}.csv')
         clear_los_gdf = close_addr_gdf[close_addr_gdf['los_score'] == 1].copy()
+        # Ensure number and street fields are included in the output
+        if 'number' in clear_los_gdf.columns and 'street' in clear_los_gdf.columns:
+            clear_los_gdf = clear_los_gdf[['number', 'street', 'geometry', 'los_score', 'distance_to_rail_m'] + 
+                                        [col for col in clear_los_gdf.columns if col not in ['number', 'street', 'geometry', 'los_score', 'distance_to_rail_m']]]
         clear_los_gdf.to_csv(clear_los_path, index=False)
         
         # Save analysis plot
