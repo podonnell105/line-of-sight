@@ -236,6 +236,14 @@ def get_opentopography_lidar_with_timeout(bbox, timeout=30):
         logging.error(f"Error getting LiDAR data: {str(e)}")
         return None
 
+def ensure_valid_geodf(gdf, crs='EPSG:4326'):
+    if not isinstance(gdf, gpd.GeoDataFrame) or 'geometry' not in gdf.columns:
+        return gpd.GeoDataFrame(geometry=[], crs=crs)
+    gdf = gdf[~gdf['geometry'].isnull()]
+    if gdf.empty:
+        return gpd.GeoDataFrame(geometry=[], crs=crs)
+    return gdf
+
 @app.route('/')
 def index():
     return render_template('index.html', states=STATES)
@@ -273,6 +281,7 @@ def upload_file():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
+    merged_buildings_gdf = gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
     try:
         # Clean up all files in output and temp directories before starting new analysis
         for dir_path in [WEB_OUTPUT_DIR, WEB_TEMP_DIR]:
@@ -353,6 +362,7 @@ def analyze():
 
         # Fetch LiDAR for each bounding box and merge
         tif_files = []
+        building_files = []
         for i, bbox in enumerate(merged_boxes):
             # Convert bbox from EPSG:3857 to EPSG:4326
             minx, miny, maxx, maxy = bbox
@@ -365,6 +375,11 @@ def analyze():
                 tif_files.append(tif_file)
             else:
                 logging.warning(f"No LiDAR for box {i+1}, skipping.")
+            # Fetch and save buildings for this bbox
+            building_file = os.path.join(WEB_TEMP_DIR, f'buildings_{i}.geojson')
+            buildings_gdf = fetch_buildings_osm(lon_min, lat_min, lon_max, lat_max, building_file)
+            buildings_gdf = ensure_valid_geodf(buildings_gdf)
+            building_files.append(building_file)
         if not tif_files:
             return jsonify({'error': 'No LiDAR data could be fetched for any area.'}), 400
         # Merge all LiDAR tiles into one
@@ -400,6 +415,7 @@ def analyze():
             lambda pt: min(pt.distance(rail) for rail in rail_gdf.geometry)
         )
         close_addr_gdf = gdf[gdf['distance_to_rail_m'] <= 500].copy()
+        print(f"Addresses within 500m of rail: {len(close_addr_gdf)}")
         if not close_addr_gdf.empty:
             los_scores = []
             for idx, addr in close_addr_gdf.iterrows():
@@ -426,46 +442,37 @@ def analyze():
         if not all_results:
             return jsonify({'error': 'No addresses with LOS results found.'}), 400
             
+        # Prepare final DataFrame for CSV output
         final_gdf = gpd.GeoDataFrame(pd.concat(all_results, ignore_index=True), crs='EPSG:4326')
-        plot_file = os.path.join(WEB_OUTPUT_DIR, 'address_los_scores.png')
-        
-        # For plotting, use the full state bounds
-        buildings_gdf = fetch_buildings_osm(min_lon, min_lat, max_lon, max_lat, None)
-        if not isinstance(buildings_gdf, gpd.GeoDataFrame) or 'geometry' not in buildings_gdf.columns:
-            logging.warning("Fetched buildings_gdf is not a valid GeoDataFrame with a geometry column. Creating empty GeoDataFrame.")
-            buildings_gdf = gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
-        save_analysis_plot(final_gdf, rail_gdf.to_crs(epsg=4326), buildings_gdf, min_lat, min_lon, max_lat, max_lon, plot_file)
-        
+        final_gdf['state'] = state_abbr
+        # Format address and coordinates
+        def format_address(row):
+            # Try to use available fields, fallback to full address if present
+            if 'full_address' in row and pd.notnull(row['full_address']):
+                return row['full_address']
+            parts = []
+            for field in ['house_number', 'street', 'city', 'state', 'postcode', 'country']:
+                if field in row and pd.notnull(row[field]):
+                    parts.append(str(row[field]))
+            return ', '.join(parts)
+        final_gdf['address'] = final_gdf.apply(format_address, axis=1)
+        final_gdf['coordinates'] = final_gdf.geometry.apply(lambda geom: f"{geom.y}, {geom.x}" if geom and not pd.isnull(geom.x) and not pd.isnull(geom.y) else '')
+        # Select columns for CSV
+        csv_columns = ['address', 'coordinates', 'state', 'los_score'] + [col for col in final_gdf.columns if col not in ['geometry', 'address', 'coordinates', 'state', 'los_score']]
         clear_los_gdf = final_gdf[final_gdf['los_score'] == 1].copy()
         clear_los_file = os.path.join(WEB_OUTPUT_DIR, 'clear_los_addresses.csv')
-        clear_los_gdf.to_csv(clear_los_file, index=False)
-        
+        clear_los_gdf.to_csv(clear_los_file, index=False, columns=csv_columns)
+        all_los_file = os.path.join(WEB_OUTPUT_DIR, 'all_addresses_los.csv')
+        final_gdf.to_csv(all_los_file, index=False, columns=csv_columns)
         statistics = {
             'total_addresses': int(len(final_gdf)),
             'clear_los': int(len(clear_los_gdf)),
             'blocked_los': int((final_gdf['los_score'] == 0).sum()),
             'clear_percentage': float(len(clear_los_gdf)) / max(1, len(final_gdf)) * 100
         }
-        
-        # Check and log geometry status for close_addr_gdf
-        if 'geometry' not in close_addr_gdf.columns:
-            logging.error("close_addr_gdf is missing a geometry column.")
-            return jsonify({'error': 'close_addr_gdf is missing a geometry column.'}), 400
-        if close_addr_gdf.geometry.is_empty.any():
-            logging.error("close_addr_gdf contains empty geometries.")
-            return jsonify({'error': 'close_addr_gdf contains empty geometries.'}), 400
-
-        # Check and log geometry status for final_gdf
-        if 'geometry' not in final_gdf.columns:
-            logging.error("final_gdf is missing a geometry column.")
-            return jsonify({'error': 'final_gdf is missing a geometry column.'}), 400
-        if final_gdf.geometry.is_empty.any():
-            logging.error("final_gdf contains empty geometries.")
-            return jsonify({'error': 'final_gdf contains empty geometries.'}), 400
-        
         return jsonify({
             'success': True,
-            'plot_file': os.path.basename(plot_file),
+            'all_los_file': os.path.basename(all_los_file),
             'clear_los_file': os.path.basename(clear_los_file),
             'statistics': statistics,
             'center_lat': center_lat,
@@ -504,8 +511,8 @@ def select_state():
             return jsonify({'error': f'Invalid state selection: {state_abbr}'}), 400
 
         logging.info(f"Processing addresses for state: {state_abbr}")
-        # For initial test, limit to 100 buffers. Change max_buffers as needed.
-        output_path = process_and_save_addresses(state_abbr, max_buffers=10)
+        # Remove buffer limit: do not set max_buffers
+        output_path = process_and_save_addresses(state_abbr)
 
         if output_path:
             logging.info(f"Successfully processed addresses for {state_abbr}")

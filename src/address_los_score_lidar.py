@@ -117,7 +117,17 @@ def fetch_buildings_osm(minx, miny, maxx, maxy, output_fn):
     """
     print("Fetching buildings from OpenStreetMap via Overpass API...")
     response = requests.get(overpass_url, params={'data': overpass_query})
-    data = response.json()
+    if response.status_code != 200:
+        print(f"Overpass API error: {response.status_code} {response.text}")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
+    try:
+        data = response.json()
+    except Exception as e:
+        print(f"Error parsing Overpass response as JSON: {e}")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
+    if 'elements' not in data or not data['elements']:
+        print("No elements in Overpass response or rate limited.")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
     print("Processing OSM data...")
     features = []
     nodes = {}
@@ -156,6 +166,16 @@ def fetch_buildings_osm(minx, miny, maxx, maxy, output_fn):
         os.makedirs(os.path.dirname(output_fn), exist_ok=True)
         gdf.to_file(output_fn, driver='GeoJSON')
         print(f"Saved building footprints to {output_fn}")
+    gdf = ensure_valid_geodf(gdf)
+    return gdf
+
+
+def ensure_valid_geodf(gdf, crs='EPSG:4326'):
+    if not isinstance(gdf, gpd.GeoDataFrame) or 'geometry' not in gdf.columns:
+        return gpd.GeoDataFrame(geometry=[], crs=crs)
+    gdf = gdf[~gdf['geometry'].isnull()]
+    if gdf.empty:
+        return gpd.GeoDataFrame(geometry=[], crs=crs)
     return gdf
 
 

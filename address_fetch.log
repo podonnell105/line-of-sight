@@ -1,0 +1,756 @@
+2025-06-12 19:39:54,456 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:39:54,498 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://192.168.1.141:5001
+2025-06-12 19:39:54,498 - INFO - [33mPress CTRL+C to quit[0m
+2025-06-12 19:39:54,499 - INFO -  * Restarting with stat
+2025-06-12 19:39:56,927 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:39:56,950 - WARNING -  * Debugger is active!
+2025-06-12 19:39:56,962 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:39:58,347 - INFO - 192.168.1.141 - - [12/Jun/2025 19:39:58] "GET / HTTP/1.1" 200 -
+2025-06-12 19:40:05,058 - INFO - Received state selection: IL
+2025-06-12 19:40:05,059 - INFO - Processing addresses for state: IL
+2025-06-12 19:40:05,060 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 19:40:05,656 - INFO - Fetching Class 1 rail lines in IL...
+2025-06-12 19:40:08,215 - INFO - Fetched 727 Class 1 rail line segments.
+2025-06-12 19:40:08,599 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:09,797 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:11,076 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:12,739 - INFO - Found 93 addresses in bbox
+2025-06-12 19:40:13,946 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:15,164 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:23,002 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:24,324 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:25,518 - INFO - Found 0 addresses in bbox
+2025-06-12 19:40:26,718 - INFO - Found 1 addresses in bbox
+2025-06-12 19:40:27,724 - INFO - Processed 10/10 buffers, found 94 addresses so far
+2025-06-12 19:40:27,744 - INFO - Created 94 records
+2025-06-12 19:40:27,744 - INFO - Saved 94 address records to web_data/uploaded_addresses.geojson
+2025-06-12 19:40:27,745 - INFO - Successfully processed addresses for IL
+2025-06-12 19:40:27,746 - INFO - 192.168.1.141 - - [12/Jun/2025 19:40:27] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 19:40:33,736 - INFO - Starting analysis for state: IL
+2025-06-12 19:40:33,945 - INFO - Fetching rail lines...
+2025-06-12 19:40:41,301 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:40:41,319 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:40:41,320 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:40:41,320 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:40:52,478 - INFO - LiDAR data received in 11.2 seconds
+2025-06-12 19:40:52,481 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:40:52,481 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:41:03,240 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 19:41:03,379 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:41:29,982 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 19:41:29,996 - INFO - 192.168.1.141 - - [12/Jun/2025 19:41:29] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 19:42:39,715 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 19:42:40,232 - INFO -  * Restarting with stat
+2025-06-12 19:42:43,346 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:42:43,373 - WARNING -  * Debugger is active!
+2025-06-12 19:42:43,383 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:42:43,454 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 19:42:43,653 - INFO -  * Restarting with stat
+2025-06-12 19:42:46,028 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:42:46,054 - WARNING -  * Debugger is active!
+2025-06-12 19:42:46,063 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:42:54,138 - INFO - Starting analysis for state: IL
+2025-06-12 19:42:54,343 - INFO - Fetching rail lines...
+2025-06-12 19:42:56,817 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:42:56,837 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:42:56,838 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:42:56,838 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:43:07,852 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 19:43:07,854 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:43:07,854 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:43:18,619 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 19:43:18,764 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:43:39,919 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 19:43:39,932 - INFO - 192.168.1.141 - - [12/Jun/2025 19:43:39] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 19:44:13,858 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 19:44:14,137 - INFO -  * Restarting with stat
+2025-06-12 19:44:17,077 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:44:17,105 - WARNING -  * Debugger is active!
+2025-06-12 19:44:17,116 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:44:22,411 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 19:44:22,624 - INFO -  * Restarting with stat
+2025-06-12 19:44:25,215 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:44:25,239 - WARNING -  * Debugger is active!
+2025-06-12 19:44:25,253 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:44:34,883 - INFO - Starting analysis for state: IL
+2025-06-12 19:44:35,058 - INFO - Fetching rail lines...
+2025-06-12 19:44:37,556 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:44:37,568 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:44:37,569 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:44:37,569 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:44:48,539 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 19:44:48,541 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:44:48,541 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:44:59,284 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 19:44:59,387 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:45:21,918 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 19:45:21,935 - INFO - 192.168.1.141 - - [12/Jun/2025 19:45:21] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 19:48:25,384 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/fetch_lidar.py', reloading
+2025-06-12 19:48:25,758 - INFO -  * Restarting with stat
+2025-06-12 19:48:28,933 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:48:28,961 - WARNING -  * Debugger is active!
+2025-06-12 19:48:28,972 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:48:31,111 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/fetch_lidar.py', reloading
+2025-06-12 19:48:31,328 - INFO -  * Restarting with stat
+2025-06-12 19:48:33,741 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:48:33,768 - WARNING -  * Debugger is active!
+2025-06-12 19:48:33,777 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:48:53,755 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:48:54,013 - INFO -  * Restarting with stat
+2025-06-12 19:48:56,954 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:48:56,979 - WARNING -  * Debugger is active!
+2025-06-12 19:48:56,989 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:49:00,189 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:49:00,430 - INFO -  * Restarting with stat
+2025-06-12 19:49:03,025 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:49:03,050 - WARNING -  * Debugger is active!
+2025-06-12 19:49:03,062 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:49:15,682 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:49:15,940 - INFO -  * Restarting with stat
+2025-06-12 19:49:18,678 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:49:18,705 - WARNING -  * Debugger is active!
+2025-06-12 19:49:18,718 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:49:19,807 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:49:20,027 - INFO -  * Restarting with stat
+2025-06-12 19:49:22,580 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:49:22,603 - WARNING -  * Debugger is active!
+2025-06-12 19:49:22,612 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:49:58,322 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:49:58,572 - INFO -  * Restarting with stat
+2025-06-12 19:50:01,340 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:50:01,365 - WARNING -  * Debugger is active!
+2025-06-12 19:50:01,378 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:50:09,829 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:50:10,053 - INFO -  * Restarting with stat
+2025-06-12 19:50:12,763 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:50:12,789 - WARNING -  * Debugger is active!
+2025-06-12 19:50:12,798 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:50:20,163 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:50:20,420 - INFO -  * Restarting with stat
+2025-06-12 19:50:23,124 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:50:23,148 - WARNING -  * Debugger is active!
+2025-06-12 19:50:23,158 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:50:28,702 - INFO - Starting analysis for state: IL
+2025-06-12 19:50:29,116 - INFO - Fetching rail lines...
+2025-06-12 19:50:36,958 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:50:36,982 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:50:36,983 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:50:36,983 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:50:48,222 - INFO - LiDAR data received in 11.2 seconds
+2025-06-12 19:50:48,568 - INFO - Created 26 records
+2025-06-12 19:50:48,570 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:50:48,570 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:50:59,326 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 19:50:59,593 - INFO - Created 5 records
+2025-06-12 19:50:59,744 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:51:00,941 - ERROR - Error in analyze: cannot access local variable 'merged_buildings_gdf' where it is not associated with a value
+2025-06-12 19:51:00,946 - INFO - 192.168.1.141 - - [12/Jun/2025 19:51:00] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 19:52:13,510 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:52:14,005 - INFO -  * Restarting with stat
+2025-06-12 19:52:16,890 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:52:16,917 - WARNING -  * Debugger is active!
+2025-06-12 19:52:16,930 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:52:35,477 - INFO - Starting analysis for state: IL
+2025-06-12 19:52:35,709 - INFO - Fetching rail lines...
+2025-06-12 19:52:42,823 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:52:42,837 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:52:42,837 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:52:42,838 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:52:53,851 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 19:52:54,173 - INFO - Created 26 records
+2025-06-12 19:52:54,174 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:52:54,175 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:53:04,872 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 19:53:05,116 - INFO - Created 5 records
+2025-06-12 19:53:05,204 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:53:06,502 - ERROR - Error creating plot: aspect must be finite and positive 
+2025-06-12 19:53:06,502 - ERROR - Error in analyze: aspect must be finite and positive 
+2025-06-12 19:53:06,506 - INFO - 192.168.1.141 - - [12/Jun/2025 19:53:06] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 19:53:55,900 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:53:56,167 - INFO -  * Restarting with stat
+2025-06-12 19:53:58,992 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:53:59,019 - WARNING -  * Debugger is active!
+2025-06-12 19:53:59,033 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:54:21,044 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 19:54:21,317 - INFO -  * Restarting with stat
+2025-06-12 19:54:24,016 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 19:54:24,043 - WARNING -  * Debugger is active!
+2025-06-12 19:54:24,053 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 19:54:28,441 - INFO - Starting analysis for state: IL
+2025-06-12 19:54:28,640 - INFO - Fetching rail lines...
+2025-06-12 19:54:30,921 - INFO - Total addresses loaded from file: 94
+2025-06-12 19:54:30,932 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 19:54:30,933 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:54:30,933 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 19:54:41,876 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 19:54:43,605 - INFO - Created 26 records
+2025-06-12 19:54:43,607 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:54:43,608 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 19:54:54,340 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 19:54:55,055 - INFO - Created 5 records
+2025-06-12 19:54:55,144 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 19:54:56,457 - INFO - 192.168.1.141 - - [12/Jun/2025 19:54:56] "POST /analyze HTTP/1.1" 200 -
+2025-06-12 19:54:56,479 - INFO - 192.168.1.141 - - [12/Jun/2025 19:54:56] "[31m[1mGET /results/clear_los_addresses.csv HTTP/1.1[0m" 403 -
+2025-06-12 20:00:51,416 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:00:51,807 - INFO -  * Restarting with stat
+2025-06-12 20:00:54,843 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:00:54,868 - WARNING -  * Debugger is active!
+2025-06-12 20:00:54,879 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:00:58,075 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:00:58,295 - INFO -  * Restarting with stat
+2025-06-12 20:01:00,663 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:01:00,685 - WARNING -  * Debugger is active!
+2025-06-12 20:01:00,694 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:01:28,099 - INFO - Starting analysis for state: IL
+2025-06-12 20:01:28,360 - INFO - Fetching rail lines...
+2025-06-12 20:01:35,665 - INFO - Total addresses loaded from file: 94
+2025-06-12 20:01:35,692 - INFO - Created 2 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:01:35,693 - INFO - Fetching LiDAR for box 1/2: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 20:01:35,693 - INFO - Requesting LiDAR data for bbox: [-90.4045277882103, 38.56796050877746, -90.38946941178969, 38.57514175863263]
+2025-06-12 20:01:46,840 - INFO - LiDAR data received in 11.1 seconds
+2025-06-12 20:01:53,632 - INFO - Created 26 records
+2025-06-12 20:01:53,633 - INFO - Fetching LiDAR for box 2/2: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 20:01:53,634 - INFO - Requesting LiDAR data for bbox: [-90.1518352882103, 38.885288790177206, -90.1473437117897, 38.8887849668076]
+2025-06-12 20:02:04,324 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:02:04,655 - INFO - Created 5 records
+2025-06-12 20:02:04,786 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:02:06,004 - INFO - 192.168.1.141 - - [12/Jun/2025 20:02:06] "[31m[1mPOST /analyze HTTP/1.1[0m" 400 -
+2025-06-12 20:02:30,788 - INFO - 192.168.1.141 - - [12/Jun/2025 20:02:30] "GET / HTTP/1.1" 200 -
+2025-06-12 20:02:35,118 - INFO - Received state selection: WA
+2025-06-12 20:02:35,119 - INFO - Processing addresses for state: WA
+2025-06-12 20:02:35,120 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 20:02:35,336 - INFO - Fetching Class 1 rail lines in WA...
+2025-06-12 20:02:37,780 - INFO - Fetched 578 Class 1 rail line segments.
+2025-06-12 20:02:38,015 - INFO - Found 1 addresses in bbox
+2025-06-12 20:02:39,713 - INFO - Found 718 addresses in bbox
+2025-06-12 20:02:40,938 - INFO - Found 1 addresses in bbox
+2025-06-12 20:02:42,256 - INFO - Found 23 addresses in bbox
+2025-06-12 20:02:43,474 - INFO - Found 0 addresses in bbox
+2025-06-12 20:02:44,660 - INFO - Found 1 addresses in bbox
+2025-06-12 20:02:47,944 - INFO - Found 0 addresses in bbox
+2025-06-12 20:02:49,888 - INFO - Found 0 addresses in bbox
+2025-06-12 20:02:51,184 - INFO - Found 0 addresses in bbox
+2025-06-12 20:02:57,159 - INFO - Found 0 addresses in bbox
+2025-06-12 20:02:58,167 - INFO - Processed 10/10 buffers, found 744 addresses so far
+2025-06-12 20:02:58,188 - INFO - Created 731 records
+2025-06-12 20:02:58,188 - INFO - Saved 731 address records to web_data/uploaded_addresses.geojson
+2025-06-12 20:02:58,190 - INFO - Successfully processed addresses for WA
+2025-06-12 20:02:58,190 - INFO - 192.168.1.141 - - [12/Jun/2025 20:02:58] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 20:03:01,561 - INFO - Starting analysis for state: WA
+2025-06-12 20:03:01,773 - INFO - Fetching rail lines...
+2025-06-12 20:03:09,840 - INFO - Total addresses loaded from file: 731
+2025-06-12 20:03:09,863 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:03:09,864 - INFO - Fetching LiDAR for box 1/5: [-122.37561568821029, 45.5763876651967, -122.3394579117897, 45.584340856155244]
+2025-06-12 20:03:09,864 - INFO - Requesting LiDAR data for bbox: [-122.37561568821029, 45.5763876651967, -122.3394579117897, 45.584340856155244]
+2025-06-12 20:03:21,098 - INFO - LiDAR data received in 11.2 seconds
+2025-06-12 20:03:21,926 - INFO - Created 1,726 records
+2025-06-12 20:03:21,931 - INFO - Fetching LiDAR for box 2/5: [-122.68704318821031, 45.63241863444743, -122.6825516117897, 45.63555932154992]
+2025-06-12 20:03:21,931 - INFO - Requesting LiDAR data for bbox: [-122.68704318821031, 45.63241863444743, -122.6825516117897, 45.63555932154992]
+2025-06-12 20:03:32,594 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:03:32,939 - INFO - Created 39 records
+2025-06-12 20:03:32,943 - INFO - Fetching LiDAR for box 3/5: [-119.81342288821027, 47.24709369557794, -119.80893131178968, 47.25014266054417]
+2025-06-12 20:03:32,943 - INFO - Requesting LiDAR data for bbox: [-119.81342288821027, 47.24709369557794, -119.80893131178968, 47.25014266054417]
+2025-06-12 20:03:43,594 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:03:43,789 - INFO - Created 0 records
+2025-06-12 20:03:43,796 - INFO - Fetching LiDAR for box 4/5: [-122.3236105882103, 47.55082205868009, -122.3179238117897, 47.55670201508992]
+2025-06-12 20:03:43,796 - INFO - Requesting LiDAR data for bbox: [-122.3236105882103, 47.55082205868009, -122.3179238117897, 47.55670201508992]
+2025-06-12 20:03:54,666 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:03:55,038 - INFO - Created 58 records
+2025-06-12 20:03:55,040 - INFO - Fetching LiDAR for box 5/5: [-122.1866567882103, 48.00786152526794, -122.1821652117897, 48.01086643096127]
+2025-06-12 20:03:55,040 - INFO - Requesting LiDAR data for bbox: [-122.1866567882103, 48.00786152526794, -122.1821652117897, 48.01086643096127]
+2025-06-12 20:04:05,772 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:04:06,054 - INFO - Created 0 records
+2025-06-12 20:04:11,098 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:05:29,715 - INFO - 192.168.1.141 - - [12/Jun/2025 20:05:29] "[31m[1mPOST /analyze HTTP/1.1[0m" 400 -
+2025-06-12 20:05:58,056 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:05:58,401 - INFO -  * Restarting with stat
+2025-06-12 20:06:01,481 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:06:01,509 - WARNING -  * Debugger is active!
+2025-06-12 20:06:01,519 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:06:09,968 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:06:10,182 - INFO -  * Restarting with stat
+2025-06-12 20:06:12,861 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:06:12,886 - WARNING -  * Debugger is active!
+2025-06-12 20:06:12,897 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:06:20,644 - INFO - Received state selection: IL
+2025-06-12 20:06:20,645 - INFO - Processing addresses for state: IL
+2025-06-12 20:06:20,646 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 20:06:20,893 - INFO - Fetching Class 1 rail lines in IL...
+2025-06-12 20:06:28,209 - INFO - Fetched 714 Class 1 rail line segments.
+2025-06-12 20:06:28,417 - INFO - Found 1 addresses in bbox
+2025-06-12 20:06:29,670 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:30,845 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:32,022 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:33,278 - INFO - Found 2 addresses in bbox
+2025-06-12 20:06:34,447 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:35,671 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:36,827 - INFO - Found 2 addresses in bbox
+2025-06-12 20:06:37,995 - INFO - Found 6 addresses in bbox
+2025-06-12 20:06:39,220 - INFO - Found 0 addresses in bbox
+2025-06-12 20:06:40,226 - INFO - Processed 10/10 buffers, found 11 addresses so far
+2025-06-12 20:06:40,237 - INFO - Created 11 records
+2025-06-12 20:06:40,237 - INFO - Saved 11 address records to web_data/uploaded_addresses.geojson
+2025-06-12 20:06:40,238 - INFO - Successfully processed addresses for IL
+2025-06-12 20:06:40,239 - INFO - 192.168.1.141 - - [12/Jun/2025 20:06:40] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 20:06:50,843 - INFO - Starting analysis for state: IL
+2025-06-12 20:06:51,047 - INFO - Fetching rail lines...
+2025-06-12 20:06:58,881 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:06:58,974 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:06:58,975 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:06:58,975 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:07:09,687 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:07:09,933 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 20:07:09,936 - INFO - 192.168.1.141 - - [12/Jun/2025 20:07:09] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 20:08:13,344 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:08:13,604 - INFO -  * Restarting with stat
+2025-06-12 20:08:16,416 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:08:16,442 - WARNING -  * Debugger is active!
+2025-06-12 20:08:16,456 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:08:19,652 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:08:19,859 - INFO -  * Restarting with stat
+2025-06-12 20:08:22,251 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:08:22,277 - WARNING -  * Debugger is active!
+2025-06-12 20:08:22,291 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:08:29,670 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:08:29,900 - INFO -  * Restarting with stat
+2025-06-12 20:08:32,339 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:08:32,365 - WARNING -  * Debugger is active!
+2025-06-12 20:08:32,376 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:08:34,509 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:08:34,719 - INFO -  * Restarting with stat
+2025-06-12 20:08:37,147 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:08:37,171 - WARNING -  * Debugger is active!
+2025-06-12 20:08:37,179 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:08:38,285 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:08:38,500 - INFO -  * Restarting with stat
+2025-06-12 20:08:40,991 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:08:41,013 - WARNING -  * Debugger is active!
+2025-06-12 20:08:41,023 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:09:08,390 - INFO - Starting analysis for state: IL
+2025-06-12 20:09:08,668 - INFO - Fetching rail lines...
+2025-06-12 20:09:16,034 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:09:16,078 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:09:16,079 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:09:16,079 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:09:26,924 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:09:27,158 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 20:09:27,165 - INFO - 192.168.1.141 - - [12/Jun/2025 20:09:27] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 20:11:01,420 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:11:01,685 - INFO -  * Restarting with stat
+2025-06-12 20:11:04,447 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:11:04,474 - WARNING -  * Debugger is active!
+2025-06-12 20:11:04,487 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:11:11,852 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:11:12,072 - INFO -  * Restarting with stat
+2025-06-12 20:11:14,956 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:11:14,979 - WARNING -  * Debugger is active!
+2025-06-12 20:11:14,989 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:11:17,313 - INFO - Starting analysis for state: IL
+2025-06-12 20:11:17,519 - INFO - Fetching rail lines...
+2025-06-12 20:11:20,027 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:11:20,072 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:11:20,073 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:11:20,074 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:11:30,757 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:11:30,995 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 20:11:30,998 - INFO - 192.168.1.141 - - [12/Jun/2025 20:11:30] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 20:12:51,238 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:12:51,491 - INFO -  * Restarting with stat
+2025-06-12 20:12:54,269 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:12:54,294 - WARNING -  * Debugger is active!
+2025-06-12 20:12:54,307 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:12:58,549 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:12:58,839 - INFO -  * Restarting with stat
+2025-06-12 20:13:01,564 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:13:01,594 - WARNING -  * Debugger is active!
+2025-06-12 20:13:01,604 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:13:02,706 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:13:03,067 - INFO -  * Restarting with stat
+2025-06-12 20:13:06,071 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:13:06,097 - WARNING -  * Debugger is active!
+2025-06-12 20:13:06,108 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:13:11,418 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:13:11,679 - INFO -  * Restarting with stat
+2025-06-12 20:13:14,547 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:13:14,574 - WARNING -  * Debugger is active!
+2025-06-12 20:13:14,584 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:13:16,727 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:13:16,939 - INFO -  * Restarting with stat
+2025-06-12 20:13:19,325 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:13:19,349 - WARNING -  * Debugger is active!
+2025-06-12 20:13:19,359 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:13:27,798 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:13:28,030 - INFO -  * Restarting with stat
+2025-06-12 20:13:30,802 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:13:30,828 - WARNING -  * Debugger is active!
+2025-06-12 20:13:30,840 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:13:37,616 - INFO - Starting analysis for state: IL
+2025-06-12 20:13:37,851 - INFO - Fetching rail lines...
+2025-06-12 20:13:40,338 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:13:40,462 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:13:40,463 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:13:40,463 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:13:51,150 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:13:51,767 - ERROR - Error in analyze: Assigning CRS to a GeoDataFrame without a geometry column is not supported. Supply geometry using the 'geometry=' keyword argument, or by providing a DataFrame with column name 'geometry'
+2025-06-12 20:13:51,772 - INFO - 192.168.1.141 - - [12/Jun/2025 20:13:51] "[35m[1mPOST /analyze HTTP/1.1[0m" 500 -
+2025-06-12 20:16:21,191 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:16:21,590 - INFO -  * Restarting with stat
+2025-06-12 20:16:24,748 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:16:24,776 - WARNING -  * Debugger is active!
+2025-06-12 20:16:24,790 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:16:30,066 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/address_los_score_lidar.py', reloading
+2025-06-12 20:16:30,291 - INFO -  * Restarting with stat
+2025-06-12 20:16:33,038 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:16:33,064 - WARNING -  * Debugger is active!
+2025-06-12 20:16:33,075 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:16:38,822 - INFO - Starting analysis for state: IL
+2025-06-12 20:16:39,247 - INFO - Fetching rail lines...
+2025-06-12 20:16:42,433 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:16:42,498 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:16:42,499 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:16:42,499 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:16:53,339 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:16:54,403 - INFO - Fetching LiDAR for box 2/5: [-89.13172018821031, 38.502570711999276, -89.12722861178972, 38.5060856451139]
+2025-06-12 20:16:54,403 - INFO - Requesting LiDAR data for bbox: [-89.13172018821031, 38.502570711999276, -89.12722861178972, 38.5060856451139]
+2025-06-12 20:17:05,157 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:17:05,468 - INFO - Created 7 records
+2025-06-12 20:17:05,469 - INFO - Fetching LiDAR for box 3/5: [-89.6088792882103, 38.607154066956106, -89.60438771178971, 38.6106638901212]
+2025-06-12 20:17:05,469 - INFO - Requesting LiDAR data for bbox: [-89.6088792882103, 38.607154066956106, -89.60438771178971, 38.6106638901212]
+2025-06-12 20:17:16,216 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:17:16,515 - INFO - Created 2 records
+2025-06-12 20:17:16,518 - INFO - Fetching LiDAR for box 4/5: [-88.8526558882103, 38.77011375968876, -88.8462129117897, 38.774611172895824]
+2025-06-12 20:17:16,518 - INFO - Requesting LiDAR data for bbox: [-88.8526558882103, 38.77011375968876, -88.8462129117897, 38.774611172895824]
+2025-06-12 20:17:27,434 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:17:27,654 - INFO - Created 5 records
+2025-06-12 20:17:27,656 - INFO - Fetching LiDAR for box 5/5: [-91.5012695882103, 39.3023664991061, -91.49012021178969, 39.30923947338944]
+2025-06-12 20:17:27,657 - INFO - Requesting LiDAR data for bbox: [-91.5012695882103, 39.3023664991061, -91.49012021178969, 39.30923947338944]
+2025-06-12 20:17:38,550 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:17:38,886 - INFO - Created 19 records
+2025-06-12 20:17:40,307 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:18:01,079 - INFO - 192.168.1.141 - - [12/Jun/2025 20:18:01] "[31m[1mPOST /analyze HTTP/1.1[0m" 400 -
+2025-06-12 20:19:24,185 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:19:24,458 - INFO -  * Restarting with stat
+2025-06-12 20:19:27,445 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:19:27,470 - WARNING -  * Debugger is active!
+2025-06-12 20:19:27,482 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:19:34,844 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:19:35,073 - INFO -  * Restarting with stat
+2025-06-12 20:19:37,811 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:19:37,836 - WARNING -  * Debugger is active!
+2025-06-12 20:19:37,847 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:19:39,768 - INFO - Starting analysis for state: IL
+2025-06-12 20:19:40,011 - INFO - Fetching rail lines...
+2025-06-12 20:19:47,418 - INFO - Total addresses loaded from file: 11
+2025-06-12 20:19:47,551 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:19:47,552 - INFO - Fetching LiDAR for box 1/5: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:19:47,552 - INFO - Requesting LiDAR data for bbox: [-89.1396738882103, 38.487304239531014, -89.13518231178969, 38.49081991758742]
+2025-06-12 20:19:58,423 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:19:58,671 - INFO - Fetching LiDAR for box 2/5: [-89.13172018821031, 38.502570711999276, -89.12722861178972, 38.5060856451139]
+2025-06-12 20:19:58,672 - INFO - Requesting LiDAR data for bbox: [-89.13172018821031, 38.502570711999276, -89.12722861178972, 38.5060856451139]
+2025-06-12 20:20:09,377 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:20:09,765 - INFO - Created 7 records
+2025-06-12 20:20:09,767 - INFO - Fetching LiDAR for box 3/5: [-89.6088792882103, 38.607154066956106, -89.60438771178971, 38.6106638901212]
+2025-06-12 20:20:09,767 - INFO - Requesting LiDAR data for bbox: [-89.6088792882103, 38.607154066956106, -89.60438771178971, 38.6106638901212]
+2025-06-12 20:20:20,539 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:20:20,790 - INFO - Created 2 records
+2025-06-12 20:20:20,794 - INFO - Fetching LiDAR for box 4/5: [-88.8526558882103, 38.77011375968876, -88.8462129117897, 38.774611172895824]
+2025-06-12 20:20:20,794 - INFO - Requesting LiDAR data for bbox: [-88.8526558882103, 38.77011375968876, -88.8462129117897, 38.774611172895824]
+2025-06-12 20:20:31,647 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:20:31,988 - INFO - Created 5 records
+2025-06-12 20:20:31,992 - INFO - Fetching LiDAR for box 5/5: [-91.5012695882103, 39.3023664991061, -91.49012021178969, 39.30923947338944]
+2025-06-12 20:20:31,993 - INFO - Requesting LiDAR data for bbox: [-91.5012695882103, 39.3023664991061, -91.49012021178969, 39.30923947338944]
+2025-06-12 20:20:42,920 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:20:43,237 - INFO - Created 19 records
+2025-06-12 20:20:44,781 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:21:06,468 - INFO - 192.168.1.141 - - [12/Jun/2025 20:21:06] "[31m[1mPOST /analyze HTTP/1.1[0m" 400 -
+2025-06-12 20:21:26,767 - INFO - Received state selection: TN
+2025-06-12 20:21:26,767 - INFO - Processing addresses for state: TN
+2025-06-12 20:21:26,768 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 20:21:27,096 - INFO - Fetching Class 1 rail lines in TN...
+2025-06-12 20:21:35,093 - INFO - Fetched 749 Class 1 rail line segments.
+2025-06-12 20:21:37,823 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:39,044 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:40,714 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:41,878 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:43,078 - INFO - Found 1 addresses in bbox
+2025-06-12 20:21:44,260 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:45,490 - INFO - Found 1 addresses in bbox
+2025-06-12 20:21:46,711 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:48,581 - INFO - Found 0 addresses in bbox
+2025-06-12 20:21:49,786 - INFO - Found 3 addresses in bbox
+2025-06-12 20:21:50,792 - INFO - Processed 10/10 buffers, found 5 addresses so far
+2025-06-12 20:21:50,825 - INFO - Created 5 records
+2025-06-12 20:21:50,825 - INFO - Saved 5 address records to web_data/uploaded_addresses.geojson
+2025-06-12 20:21:50,827 - INFO - Successfully processed addresses for TN
+2025-06-12 20:21:50,827 - INFO - 192.168.1.141 - - [12/Jun/2025 20:21:50] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 20:22:31,003 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:22:31,335 - INFO -  * Restarting with stat
+2025-06-12 20:22:34,653 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:22:34,680 - WARNING -  * Debugger is active!
+2025-06-12 20:22:34,695 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:22:45,749 - INFO - Received state selection: IL
+2025-06-12 20:22:45,750 - INFO - Processing addresses for state: IL
+2025-06-12 20:22:45,751 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 20:22:46,165 - INFO - Fetching Class 1 rail lines in IL...
+2025-06-12 20:22:48,984 - INFO - Fetched 705 Class 1 rail line segments.
+2025-06-12 20:22:49,206 - INFO - Found 1 addresses in bbox
+2025-06-12 20:22:50,761 - INFO - Found 14 addresses in bbox
+2025-06-12 20:22:51,923 - INFO - Found 0 addresses in bbox
+2025-06-12 20:22:53,138 - INFO - Found 0 addresses in bbox
+2025-06-12 20:22:54,752 - INFO - Found 0 addresses in bbox
+2025-06-12 20:22:55,924 - INFO - Found 0 addresses in bbox
+2025-06-12 20:22:57,125 - INFO - Found 8 addresses in bbox
+2025-06-12 20:22:58,446 - INFO - Found 1 addresses in bbox
+2025-06-12 20:22:59,641 - INFO - Found 0 addresses in bbox
+2025-06-12 20:23:00,984 - INFO - Found 2479 addresses in bbox
+2025-06-12 20:23:01,989 - INFO - Processed 10/10 buffers, found 2503 addresses so far
+2025-06-12 20:23:02,033 - INFO - Created 2,503 records
+2025-06-12 20:23:02,034 - INFO - Saved 2503 address records to web_data/uploaded_addresses.geojson
+2025-06-12 20:23:02,035 - INFO - Successfully processed addresses for IL
+2025-06-12 20:23:02,036 - INFO - 192.168.1.141 - - [12/Jun/2025 20:23:02] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 20:23:07,109 - INFO - Starting analysis for state: IL
+2025-06-12 20:23:07,350 - INFO - Fetching rail lines...
+2025-06-12 20:23:14,740 - INFO - Total addresses loaded from file: 2503
+2025-06-12 20:23:14,843 - INFO - Created 5 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:23:14,844 - INFO - Fetching LiDAR for box 1/5: [-89.6675648882103, 38.0099746568273, -89.6630733117897, 38.01351350046232]
+2025-06-12 20:23:14,844 - INFO - Requesting LiDAR data for bbox: [-89.6675648882103, 38.0099746568273, -89.6630733117897, 38.01351350046232]
+2025-06-12 20:23:25,684 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:23:25,917 - INFO - Fetching LiDAR for box 2/5: [-90.2136675882103, 38.51598133929194, -90.20651111178968, 38.52391161001438]
+2025-06-12 20:23:25,917 - INFO - Requesting LiDAR data for bbox: [-90.2136675882103, 38.51598133929194, -90.20651111178968, 38.52391161001438]
+2025-06-12 20:23:36,798 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:23:37,129 - INFO - Created 145 records
+2025-06-12 20:23:37,131 - INFO - Fetching LiDAR for box 3/5: [-90.1384355882103, 38.68477676704863, -90.1339440117897, 38.688282790002475]
+2025-06-12 20:23:37,131 - INFO - Requesting LiDAR data for bbox: [-90.1384355882103, 38.68477676704863, -90.1339440117897, 38.688282790002475]
+2025-06-12 20:23:47,796 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:23:48,046 - INFO - Fetching LiDAR for box 4/5: [-90.24080488821029, 38.79570458798621, -90.2041138117897, 38.8307082950459]
+2025-06-12 20:23:48,047 - INFO - Requesting LiDAR data for bbox: [-90.24080488821029, 38.79570458798621, -90.2041138117897, 38.8307082950459]
+2025-06-12 20:23:59,529 - INFO - LiDAR data received in 11.5 seconds
+2025-06-12 20:23:59,786 - INFO - Created 12 records
+2025-06-12 20:23:59,788 - INFO - Fetching LiDAR for box 5/5: [-90.2568424882103, 41.79908181667043, -90.2474524117897, 41.80563055597099]
+2025-06-12 20:23:59,788 - INFO - Requesting LiDAR data for bbox: [-90.2568424882103, 41.79908181667043, -90.2474524117897, 41.80563055597099]
+2025-06-12 20:24:10,592 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:24:10,868 - INFO - Created 22 records
+2025-06-12 20:24:12,533 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:24:44,309 - INFO - 192.168.1.141 - - [12/Jun/2025 20:24:44] "[31m[1mPOST /analyze HTTP/1.1[0m" 400 -
+2025-06-12 20:27:41,724 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:27:42,134 - INFO -  * Restarting with stat
+2025-06-12 20:27:45,292 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:27:45,318 - WARNING -  * Debugger is active!
+2025-06-12 20:27:45,330 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:27:48,505 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:27:48,716 - INFO -  * Restarting with stat
+2025-06-12 20:27:51,121 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:27:51,146 - WARNING -  * Debugger is active!
+2025-06-12 20:27:51,155 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:27:52,256 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:27:52,463 - INFO -  * Restarting with stat
+2025-06-12 20:27:54,832 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:27:54,858 - WARNING -  * Debugger is active!
+2025-06-12 20:27:54,868 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:32:15,444 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:32:15,876 - INFO -  * Restarting with stat
+2025-06-12 20:32:19,132 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:32:19,162 - WARNING -  * Debugger is active!
+2025-06-12 20:32:19,173 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:32:29,700 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:32:29,971 - INFO -  * Restarting with stat
+2025-06-12 20:32:32,887 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:32:32,912 - WARNING -  * Debugger is active!
+2025-06-12 20:32:32,926 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:32:35,077 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:32:35,315 - INFO -  * Restarting with stat
+2025-06-12 20:32:37,877 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:32:37,904 - WARNING -  * Debugger is active!
+2025-06-12 20:32:37,913 - INFO -  * Debugger PIN: 392-743-577
+2025-06-12 20:32:43,975 - INFO - Received state selection: WA
+2025-06-12 20:32:43,975 - INFO - Processing addresses for state: WA
+2025-06-12 20:32:43,976 - INFO - Removed existing web_data/uploaded_addresses.geojson
+2025-06-12 20:32:44,385 - INFO - Fetching Class 1 rail lines in WA...
+2025-06-12 20:32:54,865 - INFO - Fetched 558 Class 1 rail line segments.
+2025-06-12 20:32:55,477 - INFO - Found 1 addresses in bbox
+2025-06-12 20:32:56,746 - INFO - Found 0 addresses in bbox
+2025-06-12 20:32:58,139 - INFO - Found 364 addresses in bbox
+2025-06-12 20:33:00,054 - INFO - Found 43 addresses in bbox
+2025-06-12 20:33:01,722 - INFO - Found 143 addresses in bbox
+2025-06-12 20:33:21,031 - INFO - Found 6660 addresses in bbox
+2025-06-12 20:33:22,309 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:23,857 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:25,038 - INFO - Found 14 addresses in bbox
+2025-06-12 20:33:26,289 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:27,296 - INFO - Processed 10/50 buffers, found 7225 addresses so far
+2025-06-12 20:33:27,527 - INFO - Found 8 addresses in bbox
+2025-06-12 20:33:28,764 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:29,931 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:31,122 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:32,307 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:33,598 - INFO - Found 5 addresses in bbox
+2025-06-12 20:33:34,792 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:36,030 - INFO - Found 1 addresses in bbox
+2025-06-12 20:33:37,296 - INFO - Found 106 addresses in bbox
+2025-06-12 20:33:38,495 - INFO - Found 2 addresses in bbox
+2025-06-12 20:33:39,501 - INFO - Processed 20/50 buffers, found 7347 addresses so far
+2025-06-12 20:33:39,691 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:40,859 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:42,031 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:43,298 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:47,155 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:48,347 - INFO - Found 14 addresses in bbox
+2025-06-12 20:33:49,769 - INFO - Found 108 addresses in bbox
+2025-06-12 20:33:51,661 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:52,855 - INFO - Found 0 addresses in bbox
+2025-06-12 20:33:54,118 - INFO - Found 142 addresses in bbox
+2025-06-12 20:33:55,124 - INFO - Processed 30/50 buffers, found 7611 addresses so far
+2025-06-12 20:33:55,343 - INFO - Found 3 addresses in bbox
+2025-06-12 20:33:56,606 - INFO - Found 1 addresses in bbox
+2025-06-12 20:33:57,859 - INFO - Found 11 addresses in bbox
+2025-06-12 20:33:59,093 - INFO - Found 1 addresses in bbox
+2025-06-12 20:34:00,262 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:01,433 - INFO - Found 2 addresses in bbox
+2025-06-12 20:34:02,700 - INFO - Found 123 addresses in bbox
+2025-06-12 20:34:04,316 - INFO - Found 157 addresses in bbox
+2025-06-12 20:34:05,560 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:06,748 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:07,754 - INFO - Processed 40/50 buffers, found 7909 addresses so far
+2025-06-12 20:34:09,016 - INFO - Found 81 addresses in bbox
+2025-06-12 20:34:10,288 - INFO - Found 21 addresses in bbox
+2025-06-12 20:34:11,609 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:12,826 - INFO - Found 22 addresses in bbox
+2025-06-12 20:34:14,056 - INFO - Found 82 addresses in bbox
+2025-06-12 20:34:17,823 - INFO - Found 2310 addresses in bbox
+2025-06-12 20:34:19,411 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:21,111 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:23,203 - INFO - Found 8 addresses in bbox
+2025-06-12 20:34:24,799 - INFO - Found 0 addresses in bbox
+2025-06-12 20:34:25,805 - INFO - Processed 50/50 buffers, found 10433 addresses so far
+2025-06-12 20:34:25,928 - INFO - Created 10,427 records
+2025-06-12 20:34:25,929 - INFO - Saved 10427 address records to web_data/uploaded_addresses.geojson
+2025-06-12 20:34:25,933 - INFO - Successfully processed addresses for WA
+2025-06-12 20:34:25,934 - INFO - 192.168.1.141 - - [12/Jun/2025 20:34:25] "POST /select_state HTTP/1.1" 200 -
+2025-06-12 20:34:56,319 - INFO - Starting analysis for state: WA
+2025-06-12 20:34:56,552 - INFO - Fetching rail lines...
+2025-06-12 20:35:04,643 - INFO - Total addresses loaded from file: 10427
+2025-06-12 20:35:05,072 - INFO - Created 27 non-overlapping bounding boxes for LiDAR requests.
+2025-06-12 20:35:05,073 - INFO - Fetching LiDAR for box 1/27: [-122.46355998821032, 45.541749195834235, -122.43134421178969, 45.55039140637136]
+2025-06-12 20:35:05,073 - INFO - Requesting LiDAR data for bbox: [-122.46355998821032, 45.541749195834235, -122.43134421178969, 45.55039140637136]
+2025-06-12 20:35:16,360 - INFO - LiDAR data received in 11.3 seconds
+2025-06-12 20:35:17,763 - INFO - Created 1,043 records
+2025-06-12 20:35:17,766 - INFO - Fetching LiDAR for box 2/27: [-122.74673968821028, 45.55951879304715, -122.73938961178972, 45.563787231499575]
+2025-06-12 20:35:17,766 - INFO - Requesting LiDAR data for bbox: [-122.74673968821028, 45.55951879304715, -122.73938961178972, 45.563787231499575]
+2025-06-12 20:35:28,697 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:35:29,127 - INFO - Created 101 records
+2025-06-12 20:35:29,130 - INFO - Fetching LiDAR for box 3/27: [-122.71839968821028, 45.58838510108063, -122.70395231178968, 45.61412232214304]
+2025-06-12 20:35:29,130 - INFO - Requesting LiDAR data for bbox: [-122.71839968821028, 45.58838510108063, -122.70395231178968, 45.61412232214304]
+2025-06-12 20:35:40,395 - INFO - LiDAR data received in 11.3 seconds
+2025-06-12 20:35:40,744 - INFO - Created 501 records
+2025-06-12 20:35:40,747 - INFO - Fetching LiDAR for box 4/27: [-122.61652778821032, 45.58324645720913, -122.48021221178969, 45.62064773934593]
+2025-06-12 20:35:40,747 - INFO - Requesting LiDAR data for bbox: [-122.61652778821032, 45.58324645720913, -122.48021221178969, 45.62064773934593]
+2025-06-12 20:35:52,450 - INFO - LiDAR data received in 11.7 seconds
+2025-06-12 20:35:54,549 - INFO - Created 15,006 records
+2025-06-12 20:35:54,574 - INFO - Fetching LiDAR for box 5/27: [-122.65403328821031, 45.61290938788449, -122.64799881178969, 45.61853029866422]
+2025-06-12 20:35:54,574 - INFO - Requesting LiDAR data for bbox: [-122.65403328821031, 45.61290938788449, -122.64799881178969, 45.61853029866422]
+2025-06-12 20:36:05,469 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:36:05,929 - INFO - Created 34 records
+2025-06-12 20:36:05,940 - INFO - Fetching LiDAR for box 6/27: [-122.6915104882103, 45.63408248106951, -122.68589021178971, 45.64677460724749]
+2025-06-12 20:36:05,940 - INFO - Requesting LiDAR data for bbox: [-122.6915104882103, 45.63408248106951, -122.68589021178971, 45.64677460724749]
+2025-06-12 20:36:16,751 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:36:17,067 - INFO - Created 186 records
+2025-06-12 20:36:17,070 - INFO - Fetching LiDAR for box 7/27: [-122.9164686882103, 46.13118576934916, -122.91099361178969, 46.1439701133334]
+2025-06-12 20:36:17,070 - INFO - Requesting LiDAR data for bbox: [-122.9164686882103, 46.13118576934916, -122.91099361178969, 46.1439701133334]
+2025-06-12 20:36:27,874 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:36:28,175 - INFO - Created 459 records
+2025-06-12 20:36:28,178 - INFO - Fetching LiDAR for box 8/27: [-122.4354890882103, 47.24104152139646, -122.43099751178971, 47.24409083472491]
+2025-06-12 20:36:28,179 - INFO - Requesting LiDAR data for bbox: [-122.4354890882103, 47.24104152139646, -122.43099751178971, 47.24409083472491]
+2025-06-12 20:36:38,880 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:36:39,419 - INFO - Created 2 records
+2025-06-12 20:36:39,422 - INFO - Fetching LiDAR for box 9/27: [-122.5537711882103, 48.784201978932856, -122.5492796117897, 48.787161377437435]
+2025-06-12 20:36:39,423 - INFO - Requesting LiDAR data for bbox: [-122.5537711882103, 48.784201978932856, -122.5492796117897, 48.787161377437435]
+2025-06-12 20:36:50,155 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:36:50,499 - INFO - Fetching LiDAR for box 10/27: [-122.5366305882103, 48.78780378513409, -122.52689351178971, 48.797695966786684]
+2025-06-12 20:36:50,499 - INFO - Requesting LiDAR data for bbox: [-122.5366305882103, 48.78780378513409, -122.52689351178971, 48.797695966786684]
+2025-06-12 20:37:01,372 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:37:01,631 - INFO - Created 38 records
+2025-06-12 20:37:01,634 - INFO - Fetching LiDAR for box 11/27: [-122.59393998821031, 48.833975847060245, -122.5647653117897, 48.85267314477294]
+2025-06-12 20:37:01,634 - INFO - Requesting LiDAR data for bbox: [-122.59393998821031, 48.833975847060245, -122.5647653117897, 48.85267314477294]
+2025-06-12 20:37:13,031 - INFO - LiDAR data received in 11.4 seconds
+2025-06-12 20:37:13,811 - INFO - Created 358 records
+2025-06-12 20:37:13,815 - INFO - Fetching LiDAR for box 12/27: [-122.67125918821031, 48.933117174650405, -122.66310211178971, 48.939916068017794]
+2025-06-12 20:37:13,816 - INFO - Requesting LiDAR data for bbox: [-122.67125918821031, 48.933117174650405, -122.66310211178971, 48.939916068017794]
+2025-06-12 20:37:24,722 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:37:24,972 - INFO - Created 10 records
+2025-06-12 20:37:24,975 - INFO - Fetching LiDAR for box 13/27: [-122.6907378882103, 48.949127147830794, -122.68624631178969, 48.952076808573636]
+2025-06-12 20:37:24,975 - INFO - Requesting LiDAR data for bbox: [-122.6907378882103, 48.949127147830794, -122.68624631178969, 48.952076808573636]
+2025-06-12 20:37:35,658 - INFO - LiDAR data received in 10.7 seconds
+2025-06-12 20:37:35,932 - INFO - Created 1 records
+2025-06-12 20:37:35,936 - INFO - Fetching LiDAR for box 14/27: [-121.48865528821028, 45.72228865455865, -121.47661041178971, 45.729784079081405]
+2025-06-12 20:37:35,936 - INFO - Requesting LiDAR data for bbox: [-121.48865528821028, 45.72228865455865, -121.47661041178971, 45.729784079081405]
+2025-06-12 20:37:46,742 - INFO - LiDAR data received in 10.8 seconds
+2025-06-12 20:37:47,036 - INFO - Created 455 records
+2025-06-12 20:37:47,039 - INFO - Fetching LiDAR for box 15/27: [-119.10583108821032, 46.1965452172734, -119.09262591178971, 46.2057484663327]
+2025-06-12 20:37:47,040 - INFO - Requesting LiDAR data for bbox: [-119.10583108821032, 46.1965452172734, -119.09262591178971, 46.2057484663327]
+2025-06-12 20:37:58,057 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 20:37:58,982 - INFO - Created 483 records
+2025-06-12 20:37:58,985 - INFO - Fetching LiDAR for box 16/27: [-122.2352712882103, 47.29919859585944, -122.22868051178969, 47.304640491247824]
+2025-06-12 20:37:58,985 - INFO - Requesting LiDAR data for bbox: [-122.2352712882103, 47.29919859585944, -122.22868051178969, 47.304640491247824]
+2025-06-12 20:38:09,866 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:38:10,183 - INFO - Created 35 records
+2025-06-12 20:38:10,186 - INFO - Fetching LiDAR for box 17/27: [-121.92333478821028, 47.31827354540866, -121.88889721178967, 47.33462712717769]
+2025-06-12 20:38:10,186 - INFO - Requesting LiDAR data for bbox: [-121.92333478821028, 47.31827354540866, -121.88889721178967, 47.33462712717769]
+2025-06-12 20:38:21,371 - INFO - LiDAR data received in 11.2 seconds
+2025-06-12 20:38:22,187 - INFO - Created 348 records
+2025-06-12 20:38:22,190 - INFO - Fetching LiDAR for box 18/27: [-122.00258338821028, 47.34760439075938, -121.97732021178969, 47.361708946452055]
+2025-06-12 20:38:22,190 - INFO - Requesting LiDAR data for bbox: [-122.00258338821028, 47.34760439075938, -121.97732021178969, 47.361708946452055]
+2025-06-12 20:38:33,510 - INFO - LiDAR data received in 11.3 seconds
+2025-06-12 20:38:33,806 - INFO - Created 393 records
+2025-06-12 20:38:33,809 - INFO - Fetching LiDAR for box 19/27: [-122.2375549882103, 47.35194601592419, -122.22942431178969, 47.380995790235886]
+2025-06-12 20:38:33,809 - INFO - Requesting LiDAR data for bbox: [-122.2375549882103, 47.35194601592419, -122.22942431178969, 47.380995790235886]
+2025-06-12 20:38:44,837 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 20:38:45,233 - INFO - Created 691 records
+2025-06-12 20:38:45,237 - INFO - Fetching LiDAR for box 20/27: [-120.42038258821029, 47.45216170747138, -120.3285271117897, 47.489135168398306]
+2025-06-12 20:38:45,237 - INFO - Requesting LiDAR data for bbox: [-120.42038258821029, 47.45216170747138, -120.3285271117897, 47.489135168398306]
+2025-06-12 20:38:57,070 - INFO - LiDAR data received in 11.8 seconds
+2025-06-12 20:38:57,979 - INFO - Created 3,299 records
+2025-06-12 20:38:57,986 - INFO - Fetching LiDAR for box 21/27: [-122.2473654882103, 47.47369182929165, -122.2243458117897, 47.48145449030756]
+2025-06-12 20:38:57,986 - INFO - Requesting LiDAR data for bbox: [-122.2473654882103, 47.47369182929165, -122.2243458117897, 47.48145449030756]
+2025-06-12 20:39:09,003 - INFO - LiDAR data received in 11.0 seconds
+2025-06-12 20:39:10,932 - INFO - Created 338 records
+2025-06-12 20:39:10,937 - INFO - Fetching LiDAR for box 22/27: [-122.34019648821027, 47.5702679211811, -122.33392031178968, 47.575830961703026]
+2025-06-12 20:39:10,937 - INFO - Requesting LiDAR data for bbox: [-122.34019648821027, 47.5702679211811, -122.33392031178968, 47.575830961703026]
+2025-06-12 20:39:21,867 - INFO - LiDAR data received in 10.9 seconds
+2025-06-12 20:39:22,334 - INFO - Created 35 records
+2025-06-12 20:39:22,337 - INFO - Fetching LiDAR for box 23/27: [-117.03494818821031, 47.704766716536945, -117.00514391178972, 47.71655548545499]
+2025-06-12 20:39:22,337 - INFO - Requesting LiDAR data for bbox: [-117.03494818821031, 47.704766716536945, -117.00514391178972, 47.71655548545499]
+2025-06-12 20:39:22,843 - INFO - LiDAR data received in 0.5 seconds
+2025-06-12 20:39:22,843 - WARNING - No LiDAR for box 23, skipping.
+2025-06-12 20:39:23,885 - INFO - Created 122 records
+2025-06-12 20:39:23,888 - INFO - Fetching LiDAR for box 24/27: [-116.96776978821032, 47.78461003290058, -116.96327821178971, 47.78762792329399]
+2025-06-12 20:39:23,888 - INFO - Requesting LiDAR data for bbox: [-116.96776978821032, 47.78461003290058, -116.96327821178971, 47.78762792329399]
+2025-06-12 20:39:24,388 - INFO - LiDAR data received in 0.5 seconds
+2025-06-12 20:39:24,388 - WARNING - No LiDAR for box 24, skipping.
+2025-06-12 20:39:25,399 - INFO - Created 10 records
+2025-06-12 20:39:25,403 - INFO - Fetching LiDAR for box 25/27: [-122.18303408821029, 48.05049576770956, -122.1749513117897, 48.06127386182728]
+2025-06-12 20:39:25,403 - INFO - Requesting LiDAR data for bbox: [-122.18303408821029, 48.05049576770956, -122.1749513117897, 48.06127386182728]
+2025-06-12 20:39:25,931 - INFO - LiDAR data received in 0.5 seconds
+2025-06-12 20:39:25,932 - WARNING - No LiDAR for box 25, skipping.
+2025-06-12 20:39:26,367 - INFO - Created 399 records
+2025-06-12 20:39:26,369 - INFO - Fetching LiDAR for box 26/27: [-117.6319477882103, 48.06136338454524, -117.6274562117897, 48.06436517169266]
+2025-06-12 20:39:26,369 - INFO - Requesting LiDAR data for bbox: [-117.6319477882103, 48.06136338454524, -117.6274562117897, 48.06436517169266]
+2025-06-12 20:39:26,868 - INFO - LiDAR data received in 0.5 seconds
+2025-06-12 20:39:26,868 - WARNING - No LiDAR for box 26, skipping.
+2025-06-12 20:39:27,142 - INFO - Created 29 records
+2025-06-12 20:39:27,145 - INFO - Fetching LiDAR for box 27/27: [-122.1778985882103, 48.09418484175326, -122.1707492117897, 48.102198968202835]
+2025-06-12 20:39:27,145 - INFO - Requesting LiDAR data for bbox: [-122.1778985882103, 48.09418484175326, -122.1707492117897, 48.102198968202835]
+2025-06-12 20:39:27,647 - INFO - LiDAR data received in 0.5 seconds
+2025-06-12 20:39:27,648 - WARNING - No LiDAR for box 27, skipping.
+2025-06-12 20:39:28,314 - INFO - Created 129 records
+2025-06-12 20:39:37,572 - INFO - Merged LiDAR data saved to /Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/web_data/temp/merged_lidar.tif
+2025-06-12 20:43:12,422 - INFO - 192.168.1.141 - - [12/Jun/2025 20:43:12] "POST /analyze HTTP/1.1" 200 -
+2025-06-12 20:43:12,452 - INFO - 192.168.1.141 - - [12/Jun/2025 20:43:12] "[31m[1mGET /results/clear_los_addresses.csv HTTP/1.1[0m" 403 -
+2025-06-12 20:43:29,826 - INFO - 192.168.1.141 - - [12/Jun/2025 20:43:29] "[31m[1mGET /results/undefined HTTP/1.1[0m" 403 -
+2025-06-12 20:48:28,335 - INFO -  * Detected change in '/Users/patrickodonnell/line-of-sight-cropsafe/line-of-sight/src/app.py', reloading
+2025-06-12 20:48:28,737 - INFO -  * Restarting with stat
+2025-06-12 20:48:31,965 - INFO - OpenTopography API key loaded: 77dc...e2ea
+2025-06-12 20:48:31,994 - WARNING -  * Debugger is active!
+2025-06-12 20:48:32,006 - INFO -  * Debugger PIN: 392-743-577
