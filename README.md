@@ -1,6 +1,6 @@
 # Line of Sight Analysis Tool
 
-This tool analyzes line of sight between addresses and rail lines using LiDAR data, taking into account buildings, trees, and other obstructions.
+This tool analyzes line of sight between addresses and rail lines using elevation data and building footprints.
 
 ## Prerequisites
 
@@ -32,21 +32,17 @@ This tool analyzes line of sight between addresses and rail lines using LiDAR da
    pip install -r requirements.txt
    ```
 
-4. **Set up OpenTopography API Key**
-   - Go to https://portal.opentopography.org/
-   - Create an account or log in
-   - Request an API key from your profile
-   - Create a `.env` file in the project root directory:
-     ```bash
-     # Create and open .env file
-     touch .env
-     nano .env  # or use your preferred text editor
-     ```
-   - Add your API key to the `.env` file:
-     ```
-     OPENTOPOGRAPHY_API_KEY=your_api_key_here
-     ```
-   - Save and close the file
+4. **Set up Google Maps API Key**
+   - Go to https://console.cloud.google.com/
+   - Create a new project or select an existing one
+   - Enable the "Elevation API" for your project
+   - Create credentials (API key) for the Elevation API
+
+5. **Configure Environment Variables**
+   Create a `.env` file in the project root with:
+   ```
+   GOOGLE_MAPS_API_KEY=your_api_key_here
+   ```
 
 ## Data Sources
 - **Rail Lines**: The rail line data (`data/shapefiles/tl_2022_us_rails.*`) comes from the U.S. Census Bureau's TIGER/Line Shapefiles (2022). These files contain the national rail network data and are used as the base layer for rail line analysis. (`https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer`)
@@ -64,7 +60,28 @@ This tool analyzes line of sight between addresses and rail lines using LiDAR da
     3. Uses this information to calculate line-of-sight scores between addresses and rail lines
   - Note: LiDAR coverage may vary by region. The tool will notify you if data is unavailable for your area.
 
-## What you need to do
+## Features
+
+- Line of sight analysis between addresses and rail lines
+- Building footprint detection
+- Elevation data processing
+- Vegetation and obstruction analysis
+- Source: Google Maps Elevation API (high-resolution elevation data)
+
+## Usage
+
+1. Start the application:
+   ```bash
+   python src/app.py
+   ```
+
+2. Open your browser to `http://localhost:5001`
+
+3. Upload a GeoJSON file containing addresses
+
+4. Select a state for analysis
+
+5. View results and download reports
 
 ## Running the Application
 
@@ -160,17 +177,15 @@ If you prefer to run the analysis directly using Python instead of the web inter
    ```
 
 6. **Troubleshooting manual runs**
-   - Ensure your OpenTopography API key is set in the environment
-   - Check that your input GeoJSON is in WGS84 (EPSG:4326) coordinates
-   - Verify the analysis area has LiDAR coverage
-   - Monitor the console output for any error messages
+   - Ensure your Google Maps API key is set in the environment
+   - Verify the API key is set correctly: `echo $GOOGLE_MAPS_API_KEY`
+   - Check Google Cloud Console for API usage and quotas
 
 ## Troubleshooting
 
 1. **API Key Issues**
-   - Verify the API key is set correctly: `echo $OPENTOPOGRAPHY_API_KEY`
-   - Check OpenTopography account status
-   - Ensure you have sufficient API credits
+   - Verify the API key is set correctly: `echo $GOOGLE_MAPS_API_KEY`
+   - Check Google Cloud Console for API usage and quotas
 
 2. **Package Installation Issues**
    - Update pip: `python -m pip install --upgrade pip`

@@ -1,0 +1,127 @@
+function handleAnalyzeResponse(response) {
+    if (response.success) {
+        // Update statistics
+        const stats = response.statistics;
+        document.getElementById('total-addresses').textContent = stats.total_addresses;
+        document.getElementById('clear-los').textContent = stats.clear_los;
+        document.getElementById('blocked-los').textContent = stats.blocked_los;
+        document.getElementById('clear-percentage').textContent = stats.clear_percentage.toFixed(1);
+        
+        // Show download button
+        const downloadBtn = document.getElementById('download-results');
+        downloadBtn.href = response.download_url;
+        downloadBtn.style.display = 'block';
+        
+        // Show success message
+        showMessage('Analysis complete! You can download the results below.', 'success');
+    } else {
+        showMessage(response.error || 'Analysis failed', 'error');
+    }
+}
+
+<div id="results" class="mt-4" style="display: none;">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Analysis Results</h5>
+            <div id="statistics" class="mb-3"></div>
+            <div id="download-section" class="text-center">
+                <a id="download-link" href="#" class="btn btn-primary btn-lg" style="display: inline-block;">
+                    <i class="fas fa-download"></i> Download Results
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.download-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.download-button:hover {
+    background-color: #45a049;
+}
+</style>
+
+<script>
+function analyzeAddresses() {
+    // ... existing code ...
+    
+    fetch('/analyze', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            state: selectedState
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Show results section
+        document.getElementById('results').style.display = 'block';
+        
+        // Update statistics
+        const stats = data.statistics;
+        document.getElementById('statistics').innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Addresses</h6>
+                            <p class="card-text h4">${stats.total_addresses}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Clear LOS</h6>
+                            <p class="card-text h4">${stats.clear_los}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Blocked LOS</h6>
+                            <p class="card-text h4">${stats.blocked_los}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Clear Percentage</h6>
+                            <p class="card-text h4">${stats.clear_percentage.toFixed(1)}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Update download link
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = data.download_url;
+        downloadLink.style.display = 'inline-block';
+        
+        // Hide loading spinner
+        document.getElementById('loading').style.display = 'none';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('loading').style.display = 'none';
+        alert('Error during analysis: ' + error.message);
+    });
+}
+</script> 

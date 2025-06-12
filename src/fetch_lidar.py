@@ -11,81 +11,204 @@ from rasterio.plot import show
 import contextily as ctx
 from scipy.spatial import cKDTree
 from dotenv import load_dotenv
+import time
+import json
+from rasterio.transform import from_origin
 
 # Load environment variables
 load_dotenv(override=True)
 
-def get_opentopography_lidar(bbox):
+def get_usgs_3dep_lidar(bbox):
     """
-    Query OpenTopography API for available LiDAR point cloud data in the given bounding box
+    Query USGS 3DEP API for high-resolution LiDAR data in the given bounding box
     """
-    # OpenTopography API endpoint for USGS 3DEP data
-    base_url = "https://portal.opentopography.org/API/usgsdem"
-    
-    # Your API key
-    api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
-    if not api_key:
-        print("WARNING: OPENTOPOGRAPHY_API_KEY environment variable is not set")
-        # Try to load directly from .env file
-        try:
-            with open('.env', 'r') as f:
-                for line in f:
-                    if line.startswith('OPENTOPOGRAPHY_API_KEY='):
-                        api_key = line.strip().split('=')[1]
-                        os.environ['OPENTOPOGRAPHY_API_KEY'] = api_key
-                        print(f"Manually loaded API key: {api_key[:4]}...{api_key[-4:]}")
-                        break
-        except Exception as e:
-            print(f"Error reading .env file: {str(e)}")
-            return None
-    
-    if not api_key:
-        print("ERROR: Could not load OpenTopography API key")
-        return None
-        
-    print(f"Using API key: {api_key[:4]}...{api_key[-4:]}")  # Only show first/last 4 chars for security
+    # USGS 3DEP API endpoint - using the 1 meter DEM endpoint
+    base_url = "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/1meter/ImageServer/exportImage"
     
     # Convert bbox to the format expected by the API
     params = {
-        'datasetName': 'USGS10m',  # Using 10m resolution data
-        'south': bbox[1],
-        'north': bbox[3],
-        'west': bbox[0],
-        'east': bbox[2],
-        'outputFormat': 'GTiff',
-        'API_Key': api_key
+        'bbox': f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}",
+        'bboxSR': '4326',  # WGS84
+        'size': '1024,1024',  # Reduced size to avoid timeouts
+        'format': 'tiff',
+        'pixelType': 'F32',
+        'noDataInterpretation': 'esriNoDataMatchAny',
+        'interpolation': '+RSP_BilinearInterpolation',
+        'f': 'image'
     }
     
-    print("Querying OpenTopography API for available LiDAR data...")
+    print("Querying USGS 3DEP API for LiDAR data...")
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            # Add delay between requests to respect rate limits
+            time.sleep(retry_delay)
+            
+            # Get the data
+            response = requests.get(base_url, params=params, timeout=30)
+            response.raise_for_status()
+            
+            # Save to temporary file
+            with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as tmp:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        tmp.write(chunk)
+                tmp_path = tmp.name
+                
+            print(f"Downloaded data to {tmp_path}")
+            return tmp_path
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error: API request failed (attempt {attempt + 1}/{max_retries}): {e}")
+            if hasattr(e.response, 'text'):
+                print("Response text:", e.response.text)
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Trying alternative endpoint...")
+                return get_usgs_3dep_lidar_alternative(bbox)
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                return None
+
+def get_usgs_3dep_lidar_alternative(bbox):
+    """
+    Alternative USGS 3DEP API endpoint using the 10 meter DEM
+    """
+    base_url = "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/10meter/ImageServer/exportImage"
+    
+    params = {
+        'bbox': f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}",
+        'bboxSR': '4326',
+        'size': '512,512',  # Further reduced size
+        'format': 'tiff',
+        'pixelType': 'F32',
+        'noDataInterpretation': 'esriNoDataMatchAny',
+        'interpolation': '+RSP_BilinearInterpolation',
+        'f': 'image'
+    }
+    
+    print("Trying alternative USGS 3DEP API endpoint...")
     try:
-        # Get the data - no need for JSON headers since we're downloading a GeoTIFF
-        response = requests.get(base_url, params=params)
+        response = requests.get(base_url, params=params, timeout=30)
         response.raise_for_status()
         
-        # Save to temporary file
         with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as tmp:
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:
                     tmp.write(chunk)
             tmp_path = tmp.name
             
-        print(f"Downloaded data to {tmp_path}")
+        print(f"Downloaded data from alternative endpoint to {tmp_path}")
         return tmp_path
         
-    except requests.exceptions.RequestException as e:
-        print(f"Error: API request failed: {e}")
-        if hasattr(e.response, 'text'):
-            print("Response text:", e.response.text)
-        return None
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Error with alternative endpoint: {e}")
         return None
+
+def get_google_elevation(bbox):
+    """
+    Query Google Elevation API for high-resolution elevation data
+    """
+    try:
+        # Get API key from environment
+        api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+        if not api_key:
+            raise ValueError("GOOGLE_MAPS_API_KEY not found in environment variables")
+
+        # Create a grid of points within the bounding box
+        min_lon, min_lat, max_lon, max_lat = bbox
+        grid_size = 100  # Number of points in each direction
+        lons = np.linspace(min_lon, max_lon, grid_size)
+        lats = np.linspace(min_lat, max_lat, grid_size)
+        
+        # Create points for API request
+        points = []
+        for lat in lats:
+            for lon in lons:
+                points.append(f"{lat},{lon}")
+        
+        # Split points into chunks to avoid URL length limits
+        chunk_size = 100
+        elevation_data = []
+        
+        for i in range(0, len(points), chunk_size):
+            chunk = points[i:i + chunk_size]
+            locations = '|'.join(chunk)
+            
+            # Make request to Google Elevation API
+            url = f"https://maps.googleapis.com/maps/api/elevation/json?locations={locations}&key={api_key}"
+            response = requests.get(url)
+            
+            if response.status_code != 200:
+                raise Exception(f"Google Elevation API error: {response.status_code} {response.text}")
+            
+            data = response.json()
+            if data['status'] != 'OK':
+                raise Exception(f"Google Elevation API error: {data['status']}")
+            
+            # Extract elevation values
+            chunk_elevations = [result['elevation'] for result in data['results']]
+            elevation_data.extend(chunk_elevations)
+            
+            # Respect rate limits
+            time.sleep(0.1)  # 100ms delay between requests
+        
+        # Reshape elevation data into a grid
+        elevation_grid = np.array(elevation_data).reshape(grid_size, grid_size)
+        
+        # Create a temporary file for the elevation data
+        temp_file = 'temp_elevation.tif'
+        
+        # Calculate the transform
+        x_res = (max_lon - min_lon) / grid_size
+        y_res = (max_lat - min_lat) / grid_size
+        transform = from_origin(min_lon, max_lat, x_res, y_res)
+        
+        # Save as GeoTIFF
+        with rasterio.open(
+            temp_file,
+            'w',
+            driver='GTiff',
+            height=grid_size,
+            width=grid_size,
+            count=1,
+            dtype=elevation_grid.dtype,
+            crs='EPSG:4326',
+            transform=transform,
+        ) as dst:
+            dst.write(elevation_grid, 1)
+        
+        return temp_file
+
+    except Exception as e:
+        print(f"Error getting elevation data: {e}")
+        return None
+
+def get_lidar_data(bbox):
+    """
+    Get LiDAR data for a bounding box using Google Elevation API.
+    
+    Args:
+        bbox (tuple): Bounding box coordinates (xmin, ymin, xmax, ymax)
+        
+    Returns:
+        str: Path to the saved GeoTIFF file
+    """
+    return get_google_elevation(bbox)
 
 def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
     """
     Process downloaded elevation data and analyze vegetation in a single pass
     Using memory-efficient processing with small tiles and float32
-    Returns paths to saved intermediate files, data arrays, and statistics
+    Returns paths to saved files and statistics
     """
     try:
         # Create output directory if it doesn't exist
@@ -159,6 +282,25 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
                              crs=src.crs,
                              transform=src.transform) as dst_building:
                 
+                # Initialize statistics
+                stats = {
+                    'max_elevation': float('-inf'),
+                    'min_elevation': float('inf'),
+                    'elevation_sum': 0,
+                    'elevation_count': 0,
+                    'max_slope': float('-inf'),
+                    'slope_sum': 0,
+                    'slope_count': 0
+                }
+                
+                # Initialize arrays for the full dataset
+                elevation = np.zeros((height, width), dtype=np.float32)
+                slope = np.zeros((height, width), dtype=np.float32)
+                variance = np.zeros((height, width), dtype=np.float32)
+                tree_mask = np.zeros((height, width), dtype=np.uint8)
+                shrub_mask = np.zeros((height, width), dtype=np.uint8)
+                building_mask = np.zeros((height, width), dtype=np.uint8)
+                
                 # Process in tiles
                 for i in range(n_tiles_h):
                     for j in range(n_tiles_w):
@@ -203,6 +345,15 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
                         tile_building_mask = (tile_local_variance > var_90) & \
                                            (tile_slope_magnitude > slope_90)
                         
+                        # Update statistics
+                        stats['max_elevation'] = max(stats['max_elevation'], np.max(tile_elevation))
+                        stats['min_elevation'] = min(stats['min_elevation'], np.min(tile_elevation))
+                        stats['elevation_sum'] += np.sum(tile_elevation)
+                        stats['elevation_count'] += tile_elevation.size
+                        stats['max_slope'] = max(stats['max_slope'], np.max(tile_slope_magnitude))
+                        stats['slope_sum'] += np.sum(tile_slope_magnitude)
+                        stats['slope_count'] += tile_slope_magnitude.size
+                        
                         # Write all data to their respective files
                         dst_elev.write(tile_elevation, 1, window=window)
                         dst_slope.write(tile_slope_magnitude, 1, window=window)
@@ -211,6 +362,19 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
                         dst_shrub.write(tile_shrub_mask.astype(np.uint8), 1, window=window)
                         dst_building.write(tile_building_mask.astype(np.uint8), 1, window=window)
                         
+                        # Update the full arrays
+                        y_start = i * tile_size
+                        y_end = min(y_start + tile_size, height)
+                        x_start = j * tile_size
+                        x_end = min(x_start + tile_size, width)
+                        
+                        elevation[y_start:y_end, x_start:x_end] = tile_elevation
+                        slope[y_start:y_end, x_start:x_end] = tile_slope_magnitude
+                        variance[y_start:y_end, x_start:x_end] = tile_local_variance
+                        tree_mask[y_start:y_end, x_start:x_end] = tile_tree_mask
+                        shrub_mask[y_start:y_end, x_start:x_end] = tile_shrub_mask
+                        building_mask[y_start:y_end, x_start:x_end] = tile_building_mask
+                        
                         # Clean up temporary arrays
                         del tile_elevation, dy, dx, tile_slope_magnitude
                         del mean, mean_sq, tile_local_variance
@@ -218,30 +382,25 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
                     
                     print(f"Processed tile row {i+1}/{n_tiles_h}")
             
-            # Load processed data
-            elevation, slope, variance, tree_mask, shrub_mask, building_mask = load_processed_data({
-                'elevation': elevation_file,
-                'slope': slope_file,
-                'variance': variance_file,
-                'tree_mask': tree_mask_file,
-                'shrub_mask': shrub_mask_file,
-                'building_mask': building_mask_file
-            })
-            
-            # Calculate statistics
-            stats = {
-                'max_elevation': np.max(elevation),
-                'min_elevation': np.min(elevation),
-                'mean_elevation': np.mean(elevation),
-                'max_slope': np.max(slope),
-                'mean_slope': np.mean(slope)
-            }
+            # Calculate final statistics
+            stats['mean_elevation'] = stats['elevation_sum'] / stats['elevation_count']
+            stats['mean_slope'] = stats['slope_sum'] / stats['slope_count']
             
             # Clean up the temporary file
-            os.unlink(tif_file)
+            if os.path.exists(tif_file):
+                os.unlink(tif_file)
             
-            # Return paths to all saved files, data arrays, and statistics
-            return elevation_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats
+            # Return all expected values
+            return (
+                elevation_file,  # elevation file path
+                elevation,      # elevation array
+                slope,         # slope array
+                variance,      # variance array
+                tree_mask,     # tree mask array
+                shrub_mask,    # shrub mask array
+                building_mask, # building mask array
+                stats         # statistics dictionary
+            )
             
     except Exception as e:
         print(f"Error processing and analyzing elevation data: {e}")
@@ -526,7 +685,7 @@ def main():
     bbox = [-87.650, 41.870, -87.620, 41.890]  # Downtown Chicago area
     
     # Get elevation data
-    tif_file = get_opentopography_lidar(bbox)
+    tif_file = get_lidar_data(bbox)
     if tif_file:
         # Process the downloaded data
         file_paths = process_and_analyze_lidar_data(tif_file)

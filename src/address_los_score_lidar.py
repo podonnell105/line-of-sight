@@ -1,4 +1,4 @@
-from fetch_lidar import get_opentopography_lidar, process_and_analyze_lidar_data
+from fetch_lidar import get_lidar_data, process_and_analyze_lidar_data
 from process_rail import fetch_rail_lines_in_bbox
 import sys
 import os
@@ -228,10 +228,10 @@ def main():
                 min_lon, min_lat, max_lon, max_lat, buildings_path)
     print(f"Filtered to {len(buildings_gdf)} building footprints in the area.")
 
-    # 4. Get elevation data from OpenTopography
-    print("Getting elevation data from OpenTopography...")
+    # 4. Get elevation data from Google Maps API
+    print("Getting elevation data from Google Maps API...")
     bbox = [min_lon, min_lat, max_lon, max_lat]
-    tif_file = get_opentopography_lidar(bbox)
+    tif_file = get_lidar_data(bbox)
     if not tif_file:
         print("Failed to get elevation data")
         return

@@ -5,17 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Line of Sight Analysis</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.8.0/proj4.js"></script>
     <style>
-        #map {
-            height: 500px;
-            width: 100%;
-        }
-        .sidebar {
-            height: 100vh;
-            overflow-y: auto;
-        }
         .results {
             display: none;
         }
@@ -36,282 +26,92 @@
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 sidebar bg-light p-3">
-                <h2>Line of Sight Analysis</h2>
-                <p class="text-muted">Analyze line of sight between addresses and rail lines</p>
+    <div class="container mt-5">
+        <h2>Line of Sight Analysis</h2>
+        <p class="text-muted">Analyze line of sight between addresses and rail lines</p>
 
-              
+        <!-- State Selection -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h4>Select State</h4>
+                <select class="form-control mb-3" id="stateSelect" required>
+                    <option value="">Choose a state...</option>
+                    {% for abbr, name in states.items() %}
+                    <option value="{{ abbr }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-primary" id="analyzeBtn" disabled>
+                    Run Analysis
+                </button>
+            </div>
+        </div>
 
-                <!-- Analysis Parameters -->
-                <div class="mb-4">
-                    <h4>2. Set Parameters</h4>
-                    <form id="analysisForm">
-                        <div class="mb-3">
-                            <label class="form-label">Shrub Height Threshold (m)</label>
-                            <input type="number" class="form-control" id="shrubHeight" value="0.5" min="0.1" max="3.0" step="0.1" required>
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border text-primary me-2" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span>Analyzing addresses...</span>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error" class="error"></div>
+
+        <!-- Success Message -->
+        <div id="success" class="success"></div>
+
+        <!-- Results -->
+        <div id="results" class="results">
+            <h3>Analysis Results</h3>
+            
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Addresses</h5>
+                            <p class="card-text" id="totalAddresses">-</p>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Select State</label>
-                            <select class="form-control" id="stateSelect" required>
-                                <option value="">Choose a state...</option>
-                                {% for abbr, name in states.items() %}
-                                <option value="{{ abbr }}">{{ name }}</option>
-                                {% endfor %}
-                            </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Clear LOS</h5>
+                            <p class="card-text" id="clearLos">-</p>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100" id="analyzeBtn" disabled>
-                            Run Analysis
-                        </button>
-                    </form>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Blocked LOS</h5>
+                            <p class="card-text" id="blockedLos">-</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Clear Percentage</h5>
+                            <p class="card-text" id="clearPercentage">-</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="col-md-9 p-3">
-                <!-- Map -->
-                <h4 class="mb-3">Select Analysis Center Point</h4>
-                <p class="text-muted mb-3">Click on the map to set the center point for your analysis</p>
-                <div id="map"></div>
-
-                <!-- Results -->
-                <div id="results" class="results mt-4">
-                    <h3>Analysis Results</h3>
-                    
-                    <!-- Statistics -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Addresses</h5>
-                                    <p class="card-text" id="totalAddresses">-</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Clear LOS</h5>
-                                    <p class="card-text" id="clearLos">-</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Blocked LOS</h5>
-                                    <p class="card-text" id="blockedLos">-</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5 class="card-title">Clear Percentage</h5>
-                                    <p class="card-text" id="clearPercentage">-</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Download Button -->
-                    <div class="mt-4" id="downloadSection" style="display: none;">
-                        <a href="#" class="btn btn-success me-2" id="downloadPlot" download>Download Map Image (PNG)</a>
-                        <a href="#" class="btn btn-primary" id="downloadClearCsv" download>Download Clear LOS Addresses (CSV)</a>
-                    </div>
-                </div>
+            <!-- Download Button -->
+            <div class="mt-4">
+                <a href="#" class="btn btn-primary" id="downloadCsv" download>Download Results (CSV)</a>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        // Initialize map
-        const map = L.map('map', {
-            center: [41.71281492427427, -87.62571402239901],
-            zoom: 13,
-            zoomControl: true
-        });
-
-        // Add tile layer with error handling
-        const osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // Add error handling for tile loading
-        osmTiles.on('tileerror', function(e) {
-            console.warn('Tile loading error:', e);
-        });
-
-        // Add marker to map
-        let centerMarker = null;
-        let analysisRadius = null;
-        let clearPoints = null;
-        let blockedPoints = null;
-
-        // Handle map click
-        map.on('click', function(e) {
-            const latlng = e.latlng;
-            document.getElementById('centerLat').value = latlng.lat.toFixed(6);
-            document.getElementById('centerLon').value = latlng.lng.toFixed(6);
-
-            // Remove existing marker if it exists
-            if (centerMarker) {
-                map.removeLayer(centerMarker);
-            }
-
-            // Add new marker
-            centerMarker = L.marker(latlng, {
-                draggable: true
-            }).addTo(map);
-
-            // Update coordinates when marker is dragged
-            centerMarker.on('dragend', function(e) {
-                const markerLatlng = centerMarker.getLatLng();
-                document.getElementById('centerLat').value = markerLatlng.lat.toFixed(6);
-                document.getElementById('centerLon').value = markerLatlng.lng.toFixed(6);
-            });
-        });
-
-       
-
-        // Handle form submission
-        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const state = document.getElementById('stateSelect').value;
-            const shrub_height_threshold = parseFloat(document.getElementById('shrubHeight').value);
-            if (!state) {
-                alert('Please select a state.');
-                return;
-            }
-            const data = {
-                state: state,
-                shrub_height_threshold: shrub_height_threshold
-            };
-            try {
-                const response = await fetch('/analyze', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-
-                if (response.ok) {
-                    // Update statistics
-                    document.getElementById('totalAddresses').textContent = result.statistics.total_addresses;
-                    document.getElementById('clearLos').textContent = result.statistics.clear_los;
-                    document.getElementById('blockedLos').textContent = result.statistics.blocked_los;
-                    document.getElementById('clearPercentage').textContent = 
-                        `${result.statistics.clear_percentage.toFixed(1)}%`;
-
-                    // Update map
-                    map.setView([result.center_lat, result.center_lon], 13);
-                    
-                    // Clear existing analysis layers
-                    if (analysisRadius) map.removeLayer(analysisRadius);
-                    if (clearPoints) map.removeLayer(clearPoints);
-                    if (blockedPoints) map.removeLayer(blockedPoints);
-                    
-                    // Add analysis radius
-                    analysisRadius = L.circle([result.center_lat, result.center_lon], {
-                        radius: result.radius_km * 1000,
-                        color: 'blue',
-                        fillColor: 'blue',
-                        fillOpacity: 0.2
-                    }).addTo(map);
-                    // Plot clear LOS points from CSV
-                    clearPoints = L.layerGroup().addTo(map);
-                    fetch(`/results/${result.clear_los_file}`)
-                        .then(response => response.text())
-                        .then(csvText => {
-                            // Parse CSV (assume geometry is POINT in EPSG:3857, need to convert to WGS84)
-                            const lines = csvText.split('\n');
-                            const header = lines[0].split(',');
-                            const geomIdx = header.findIndex(h => h === 'geometry');
-                            const numIdx = header.findIndex(h => h === 'number');
-                            const streetIdx = header.findIndex(h => h === 'street');
-                            for (let i = 1; i < lines.length; i++) {
-                                const row = lines[i].split(',');
-                                if (row.length < 2) continue;
-                                let lat = null, lon = null;
-                                if (geomIdx !== -1 && row[geomIdx].startsWith('POINT')) {
-                                    // Parse WKT POINT (x y) in EPSG:3857
-                                    const match = row[geomIdx].match(/POINT \(([-\d.]+) ([-\d.]+)\)/);
-                                    if (match) {
-                                        const x = parseFloat(match[1]);
-                                        const y = parseFloat(match[2]);
-                                        // Convert from EPSG:3857 to WGS84
-                                        const wgs84 = proj4('EPSG:3857', 'EPSG:4326', [x, y]);
-                                        lon = wgs84[0];
-                                        lat = wgs84[1];
-                                    }
-                                }
-                                if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
-                                    // Create a marker with the address data
-                                    const marker = L.circleMarker([lat, lon], {
-                                        radius: 5,
-                                        color: 'lime',
-                                        fillColor: 'lime',
-                                        fillOpacity: 0.8
-                                    });
-                                    
-                                    // Add address data to the marker
-                                    const number = numIdx !== -1 ? row[numIdx].replace(/^"(.*)"$/, '$1') : '';
-                                    const street = streetIdx !== -1 ? row[streetIdx].replace(/^"(.*)"$/, '$1') : '';
-                                    const address = number && street ? `${number} ${street}` : '';
-                                    marker.address = address;
-                                    marker.coordinates = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-                                    
-                                    // Add right-click handler
-                                    marker.on('contextmenu', function(e) {
-                                        e.originalEvent.preventDefault(); // Prevent default context menu
-                                        
-                                        // Create the text to copy - just raw data without labels
-                                        const textToCopy = address ? `${address} ${marker.coordinates}` : marker.coordinates;
-                                        
-                                        // Copy to clipboard
-                                        navigator.clipboard.writeText(textToCopy).then(() => {
-                                            // Show a temporary tooltip to confirm copy
-                                            const tooltip = L.tooltip()
-                                                .setContent('Copied to clipboard!')
-                                                .setLatLng(e.latlng);
-                                            
-                                            marker.bindTooltip(tooltip).openTooltip();
-                                            
-                                            // Remove tooltip after 2 seconds
-                                            setTimeout(() => {
-                                                marker.closeTooltip();
-                                            }, 2000);
-                                        }).catch(err => {
-                                            console.error('Failed to copy text: ', err);
-                                            alert('Failed to copy to clipboard');
-                                        });
-                                    });
-                                    
-                                    marker.addTo(clearPoints);
-                                }
-                            }
-                        });
-                    // Show results and download links
-                    document.getElementById('results').style.display = 'block';
-                    document.getElementById('downloadSection').style.display = 'block';
-                    document.getElementById('downloadPlot').href = `/results/${result.plot_file}`;
-                    document.getElementById('downloadClearCsv').href = `/results/${result.clear_los_file}`;
-                } else {
-                    alert(result.error || 'Analysis failed');
-                }
-            } catch (error) {
-                alert('Error during analysis: ' + error.message);
-            }
-        });
-
-        // Add this JavaScript to handle state selection
+        // Handle state selection
         document.getElementById('stateSelect').addEventListener('change', function() {
             const state = this.value;
             if (state) {
@@ -333,64 +133,77 @@
                         // Enable the analyze button
                         document.getElementById('analyzeBtn').disabled = false;
                         // Show success message
-                        alert(data.message);
+                        document.getElementById('success').textContent = data.message;
+                        document.getElementById('success').style.display = 'block';
                     } else {
-                        alert('Error: ' + data.error);
+                        document.getElementById('error').textContent = data.error;
+                        document.getElementById('error').style.display = 'block';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Error loading addresses');
+                    document.getElementById('error').textContent = 'Error loading addresses';
+                    document.getElementById('error').style.display = 'block';
                 });
             }
         });
 
-        function fetchAddresses() {
-            const stateSelect = document.getElementById('stateSelect');
-            const loading = document.getElementById('loading');
-            const error = document.getElementById('error');
-            const success = document.getElementById('success');
-            
-            if (!stateSelect.value) {
-                error.textContent = 'Please select a state';
-                error.style.display = 'block';
-                success.style.display = 'none';
+        // Handle analysis
+        document.getElementById('analyzeBtn').addEventListener('click', async function() {
+            const state = document.getElementById('stateSelect').value;
+            if (!state) {
+                alert('Please select a state.');
                 return;
             }
-            
-            // Show loading, hide messages
-            loading.style.display = 'block';
-            error.style.display = 'none';
-            success.style.display = 'none';
-            
-            // Create form data
-            const formData = new FormData();
-            formData.append('state', stateSelect.value);
-            
-            // Send request
-            fetch('/select_state', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                loading.style.display = 'none';
-                
-                if (data.error) {
-                    error.textContent = data.error;
-                    error.style.display = 'block';
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+
+            const data = {
+                state: state,
+                shrub_height_threshold: 0.5  // Fixed value
+            };
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                if (response.ok) {
+                    // Update statistics
+                    document.getElementById('totalAddresses').textContent = result.statistics.total_addresses;
+                    document.getElementById('clearLos').textContent = result.statistics.clear_los;
+                    document.getElementById('blockedLos').textContent = result.statistics.blocked_los;
+                    document.getElementById('clearPercentage').textContent = 
+                        `${result.statistics.clear_percentage.toFixed(1)}%`;
+
+                    // Update download links
+                    document.getElementById('downloadCsv').href = result.download_url;
+                    document.getElementById('download-clear-csv').href = result.clear_download_url;
+
+                    // Show results
+                    document.getElementById('results').style.display = 'block';
                 } else {
-                    success.textContent = data.message;
-                    success.style.display = 'block';
+                    document.getElementById('error').textContent = result.error || 'Analysis failed';
+                    document.getElementById('error').style.display = 'block';
                 }
-            })
-            .catch(err => {
-                loading.style.display = 'none';
-                error.textContent = 'An error occurred while processing the request';
-                error.style.display = 'block';
-                console.error('Error:', err);
-            });
-        }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').textContent = 'Error during analysis: ' + error.message;
+                document.getElementById('error').style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html> 
