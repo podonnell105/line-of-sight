@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os
+from dotenv import load_dotenv
 import geopandas as gpd
 from address_los_score_lidar import (
     bbox_from_point_radius,
@@ -33,6 +34,9 @@ from sklearn.cluster import DBSCAN
 import numpy as np
 import rasterio
 from rasterio.merge import merge as raster_merge
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
