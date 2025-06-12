@@ -35,17 +35,7 @@ import rasterio
 from rasterio.merge import merge as raster_merge
 
 # Load environment variables from .env file
-load_dotenv()
-
-# Log environment variable status
-api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
-if api_key:
-    logging.info(f"OpenTopography API key loaded: {api_key[:4]}...{api_key[-4:]}")
-else:
-    logging.error("OpenTopography API key not found in environment variables")
-
-# Suppress SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+load_dotenv(override=True)  # Force reload of environment variables
 
 # Configure logging
 logging.basicConfig(
@@ -56,6 +46,27 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
+
+# Log environment variable status
+api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
+if api_key:
+    logging.info(f"OpenTopography API key loaded: {api_key[:4]}...{api_key[-4:]}")
+else:
+    logging.error("OpenTopography API key not found in environment variables")
+    # Try to load directly from .env file
+    try:
+        with open('.env', 'r') as f:
+            for line in f:
+                if line.startswith('OPENTOPOGRAPHY_API_KEY='):
+                    api_key = line.strip().split('=')[1]
+                    os.environ['OPENTOPOGRAPHY_API_KEY'] = api_key
+                    logging.info(f"Manually loaded API key: {api_key[:4]}...{api_key[-4:]}")
+                    break
+    except Exception as e:
+        logging.error(f"Error reading .env file: {str(e)}")
+
+# Suppress SSL warnings
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
@@ -530,6 +541,87 @@ def select_state():
     except Exception as e:
         logging.error(f"Error in select_state: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def fetch_buildings_osm(minx, miny, maxx, maxy, output_fn):
+    # Add delay between requests
+    time.sleep(1)  # 1 second delay
+    
+    # Define AOI polygon (closed)
+    aoi_geom = {
+        "coordinates": [[
+            [minx, maxy],
+            [minx, miny],
+            [maxx, miny],
+            [maxx, maxy],
+            [minx, maxy],
+        ]],
+        "type": "Polygon",
+    }
+    aoi_shape = shape(aoi_geom)
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    overpass_query = f"""
+    [out:json][timeout:300];
+    (
+      way["building"]({miny},{minx},{maxy},{maxx});
+      relation["building"]({miny},{minx},{maxy},{maxx});
+    );
+    out body;
+    >;
+    out skel qt;
+    """
+    print("Fetching buildings from OpenStreetMap via Overpass API...")
+    response = requests.get(overpass_url, params={'data': overpass_query})
+    if response.status_code != 200:
+        print(f"Overpass API error: {response.status_code} {response.text}")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
+    try:
+        data = response.json()
+    except Exception as e:
+        print(f"Error parsing Overpass response as JSON: {e}")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
+    if 'elements' not in data or not data['elements']:
+        print("No elements in Overpass response or rate limited.")
+        return gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
+    print("Processing OSM data...")
+    features = []
+    nodes = {}
+    for element in data['elements']:
+        if element['type'] == 'node':
+            nodes[element['id']] = [element['lon'], element['lat']]
+    for element in data['elements']:
+        if element['type'] == 'way' and 'nodes' in element:
+            coords = []
+            for node_id in element['nodes']:
+                if node_id in nodes:
+                    coords.append(nodes[node_id])
+            if coords and coords[0] != coords[-1]:
+                coords.append(coords[0])  # Close the polygon
+            if len(coords) >= 4:
+                feature = {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Polygon',
+                        'coordinates': [coords]
+                    },
+                    'properties': {
+                        'id': element['id'],
+                        'building': element.get('tags', {}).get('building', 'yes')
+                    }
+                }
+                features.append(feature)
+    geojson = {
+        'type': 'FeatureCollection',
+        'features': features
+    }
+    gdf = gpd.GeoDataFrame.from_features(geojson, crs='EPSG:4326')
+    gdf = gdf[gdf.geometry.within(aoi_shape)]
+    if output_fn is not None:
+        print(f"Saving {len(gdf)} building footprints to {output_fn} ...")
+        os.makedirs(os.path.dirname(output_fn), exist_ok=True)
+        gdf.to_file(output_fn, driver='GeoJSON')
+        print(f"Saved building footprints to {output_fn}")
+    gdf = ensure_valid_geodf(gdf)
+    return gdf
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True) 

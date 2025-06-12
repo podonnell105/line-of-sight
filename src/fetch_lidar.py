@@ -10,6 +10,10 @@ import rasterio
 from rasterio.plot import show
 import contextily as ctx
 from scipy.spatial import cKDTree
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(override=True)
 
 def get_opentopography_lidar(bbox):
     """
@@ -22,7 +26,23 @@ def get_opentopography_lidar(bbox):
     api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
     if not api_key:
         print("WARNING: OPENTOPOGRAPHY_API_KEY environment variable is not set")
+        # Try to load directly from .env file
+        try:
+            with open('.env', 'r') as f:
+                for line in f:
+                    if line.startswith('OPENTOPOGRAPHY_API_KEY='):
+                        api_key = line.strip().split('=')[1]
+                        os.environ['OPENTOPOGRAPHY_API_KEY'] = api_key
+                        print(f"Manually loaded API key: {api_key[:4]}...{api_key[-4:]}")
+                        break
+        except Exception as e:
+            print(f"Error reading .env file: {str(e)}")
+            return None
+    
+    if not api_key:
+        print("ERROR: Could not load OpenTopography API key")
         return None
+        
     print(f"Using API key: {api_key[:4]}...{api_key[-4:]}")  # Only show first/last 4 chars for security
     
     # Convert bbox to the format expected by the API
