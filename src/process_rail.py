@@ -6,6 +6,7 @@ from shapely.geometry import Point, box
 import requests
 from io import BytesIO
 import urllib.parse
+import json
 
 # FRA MainLine MapServer REST endpoint
 BASE_URL = "https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer/0/query"
@@ -51,7 +52,7 @@ def calculate_bounding_boxes(lat, lon, base_size, num_boxes=10):
 
 def fetch_rail_lines_in_bbox(bbox):
     """Fetch rail lines within the specified bounding box."""
-    # Build geometry as a JSON string and URL-encode it
+    # Build geometry as a JSON string
     geometry = {
         "xmin": bbox['xmin'],
         "ymin": bbox['ymin'],
@@ -59,24 +60,43 @@ def fetch_rail_lines_in_bbox(bbox):
         "ymax": bbox['ymax'],
         "spatialReference": {"wkid": 4326}
     }
-    geometry_str = urllib.parse.quote_plus(str(geometry).replace("'", '"'))
-    where_str = urllib.parse.quote_plus("CLASS='1'")
-    url = (
-        f"{BASE_URL}"
-        f"?where={where_str}"
-        f"&outFields=*"
-        f"&f=geojson"
-        f"&geometry={geometry_str}"
-        f"&geometryType=esriGeometryEnvelope"
-        f"&inSR=4326"
-        f"&spatialRel=esriSpatialRelIntersects"
-    )
+    
+    # Convert geometry to proper JSON string
+    geometry_str = json.dumps(geometry)
+    
+    # Build query parameters
+    params = {
+        'where': "CLASS='1'",
+        'outFields': '*',
+        'f': 'geojson',
+        'geometry': geometry_str,
+        'geometryType': 'esriGeometryEnvelope',
+        'inSR': '4326',
+        'outSR': '4326',
+        'spatialRel': 'esriSpatialRelIntersects'
+    }
+    
+    # Add headers
+    headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+    
     print(f"Fetching Class 1 rail lines within bounding box: {bbox}")
     try:
-        response = requests.get(url)
+        response = requests.get(BASE_URL, params=params, headers=headers)
         response.raise_for_status()
-        print("Response headers:", response.headers)
-        print("Response content (first 500 chars):", response.content[:500])
+        
+        # Check if response is valid JSON
+        try:
+            response_json = response.json()
+            if 'error' in response_json:
+                print(f"API Error: {response_json['error']}")
+                return None
+        except json.JSONDecodeError:
+            print("Response is not valid JSON")
+            return None
+            
         try:
             gdf = gpd.read_file(BytesIO(response.content))
             print(f"Fetched {len(gdf)} Class 1 rail line segments")
@@ -96,8 +116,10 @@ def fetch_rail_lines_in_bbox(bbox):
             except Exception as e2:
                 print(f"GeoPandas could not read from file: {e2}")
                 return None
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
+        if hasattr(e.response, 'text'):
+            print("Response text:", e.response.text)
         return None
 
 def combine_and_deduplicate(gdfs):
