@@ -61,9 +61,9 @@ def get_opentopography_lidar(bbox):
         print(f"Unexpected error: {e}")
         return None
 
-def process_lidar_data(tif_file, output_dir='data'):
+def process_lidar_data(tif_file, output_dir='data', tile_size=1000):
     """
-    Process downloaded elevation data and extract information
+    Process downloaded elevation data and extract information in tiles to manage memory usage
     """
     try:
         # Create output directory if it doesn't exist
@@ -71,25 +71,49 @@ def process_lidar_data(tif_file, output_dir='data'):
         
         # Read the GeoTIFF file
         with rasterio.open(tif_file) as src:
-            # Read the elevation data
-            elevation = src.read(1)
+            # Get the dimensions
+            height = src.height
+            width = src.width
             
-            # Get the transform
-            transform = src.transform
+            # Calculate number of tiles
+            n_tiles_h = (height + tile_size - 1) // tile_size
+            n_tiles_w = (width + tile_size - 1) // tile_size
             
             # Create output file
             output_file = os.path.join(output_dir, 'elevation_data.tif')
             
-            # Save the processed data
-            with rasterio.open(output_file, 'w', 
-                             driver='GTiff',
-                             height=elevation.shape[0],
-                             width=elevation.shape[1],
-                             count=1,
-                             dtype=elevation.dtype,
-                             crs=src.crs,
-                             transform=transform) as dst:
-                dst.write(elevation, 1)
+            # Process in tiles
+            for i in range(n_tiles_h):
+                for j in range(n_tiles_w):
+                    # Calculate window
+                    window = rasterio.windows.Window(
+                        j * tile_size,
+                        i * tile_size,
+                        min(tile_size, width - j * tile_size),
+                        min(tile_size, height - i * tile_size)
+                    )
+                    
+                    # Read the tile
+                    elevation = src.read(1, window=window)
+                    
+                    # Write the tile
+                    if i == 0 and j == 0:
+                        # First tile - create new file
+                        with rasterio.open(output_file, 'w',
+                                         driver='GTiff',
+                                         height=height,
+                                         width=width,
+                                         count=1,
+                                         dtype=elevation.dtype,
+                                         crs=src.crs,
+                                         transform=src.transform) as dst:
+                            dst.write(elevation, 1, window=window)
+                    else:
+                        # Subsequent tiles - update existing file
+                        with rasterio.open(output_file, 'r+') as dst:
+                            dst.write(elevation, 1, window=window)
+                
+                print(f"Processed tile row {i+1}/{n_tiles_h}")
                 
         print(f"Processed elevation data to {output_file}")
         
@@ -104,42 +128,82 @@ def process_lidar_data(tif_file, output_dir='data'):
             os.unlink(tif_file)
         return None
 
-def analyze_vegetation(tif_file):
+def analyze_vegetation(tif_file, tile_size=1000):
     """
-    Analyze elevation data to identify trees, shrubs, and other obstructions
+    Analyze elevation data to identify trees, shrubs, and other obstructions in tiles
     """
     try:
         # Read the GeoTIFF file
         with rasterio.open(tif_file) as src:
-            elevation = src.read(1)
+            # Get the dimensions
+            height = src.height
+            width = src.width
             
-            # Calculate slope and aspect
-            slope = np.gradient(elevation)
-            slope_magnitude = np.sqrt(slope[0]**2 + slope[1]**2)
-            aspect = np.arctan2(slope[1], slope[0])
+            # Calculate number of tiles
+            n_tiles_h = (height + tile_size - 1) // tile_size
+            n_tiles_w = (width + tile_size - 1) // tile_size
             
-            # Calculate local variance to detect sudden elevation changes (like trees)
-            window_size = 3
-            local_variance = np.zeros_like(elevation)
-            for i in range(window_size, elevation.shape[0] - window_size):
-                for j in range(window_size, elevation.shape[1] - window_size):
-                    window = elevation[i-window_size:i+window_size+1, 
-                                    j-window_size:j+window_size+1]
-                    local_variance[i,j] = np.var(window)
+            # Initialize arrays
+            elevation = np.zeros((height, width), dtype=np.float32)
+            slope_magnitude = np.zeros((height, width), dtype=np.float32)
+            local_variance = np.zeros((height, width), dtype=np.float32)
+            tree_mask = np.zeros((height, width), dtype=bool)
+            shrub_mask = np.zeros((height, width), dtype=bool)
+            building_mask = np.zeros((height, width), dtype=bool)
             
-            # Identify potential vegetation and obstructions
-            # Trees typically have high local variance and moderate to high slope
-            tree_mask = (local_variance > np.percentile(local_variance, 75)) & \
-                       (slope_magnitude > np.percentile(slope_magnitude, 50))
-            
-            # Shrubs typically have moderate local variance and moderate slope
-            shrub_mask = (local_variance > np.percentile(local_variance, 50)) & \
-                        (local_variance <= np.percentile(local_variance, 75)) & \
-                        (slope_magnitude > np.percentile(slope_magnitude, 25))
-            
-            # Buildings typically have high local variance and very high slope
-            building_mask = (local_variance > np.percentile(local_variance, 90)) & \
-                          (slope_magnitude > np.percentile(slope_magnitude, 90))
+            # Process in tiles
+            for i in range(n_tiles_h):
+                for j in range(n_tiles_w):
+                    # Calculate window
+                    window = rasterio.windows.Window(
+                        j * tile_size,
+                        i * tile_size,
+                        min(tile_size, width - j * tile_size),
+                        min(tile_size, height - i * tile_size)
+                    )
+                    
+                    # Read the tile
+                    tile_elevation = src.read(1, window=window)
+                    
+                    # Calculate slope and aspect for the tile
+                    tile_slope = np.gradient(tile_elevation)
+                    tile_slope_magnitude = np.sqrt(tile_slope[0]**2 + tile_slope[1]**2)
+                    
+                    # Calculate local variance for the tile
+                    window_size = 3
+                    tile_local_variance = np.zeros_like(tile_elevation)
+                    for y in range(window_size, tile_elevation.shape[0] - window_size):
+                        for x in range(window_size, tile_elevation.shape[1] - window_size):
+                            tile_window = tile_elevation[y-window_size:y+window_size+1, 
+                                                       x-window_size:x+window_size+1]
+                            tile_local_variance[y,x] = np.var(tile_window)
+                    
+                    # Identify features in the tile
+                    tile_tree_mask = (tile_local_variance > np.percentile(tile_local_variance, 75)) & \
+                                   (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 50))
+                    
+                    tile_shrub_mask = (tile_local_variance > np.percentile(tile_local_variance, 50)) & \
+                                    (tile_local_variance <= np.percentile(tile_local_variance, 75)) & \
+                                    (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 25))
+                    
+                    tile_building_mask = (tile_local_variance > np.percentile(tile_local_variance, 90)) & \
+                                       (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 90))
+                    
+                    # Store results
+                    elevation[window.row_off:window.row_off + window.height,
+                            window.col_off:window.col_off + window.width] = tile_elevation
+                    slope_magnitude[window.row_off:window.row_off + window.height,
+                                 window.col_off:window.col_off + window.width] = tile_slope_magnitude
+                    local_variance[window.row_off:window.row_off + window.height,
+                                window.col_off:window.col_off + window.width] = tile_local_variance
+                    tree_mask[window.row_off:window.row_off + window.height,
+                            window.col_off:window.col_off + window.width] = tile_tree_mask
+                    shrub_mask[window.row_off:window.row_off + window.height,
+                             window.col_off:window.col_off + window.width] = tile_shrub_mask
+                    building_mask[window.row_off:window.row_off + window.height,
+                               window.col_off:window.col_off + window.width] = tile_building_mask
+                
+                print(f"Processed tile row {i+1}/{n_tiles_h}")
             
             # Calculate statistics
             stats = {
