@@ -5,6 +5,7 @@ import os
 from shapely.geometry import Point, box
 import requests
 from io import BytesIO
+import urllib.parse
 
 # FRA MainLine MapServer REST endpoint
 BASE_URL = "https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer/0/query"
@@ -50,12 +51,22 @@ def calculate_bounding_boxes(lat, lon, base_size, num_boxes=10):
 
 def fetch_rail_lines_in_bbox(bbox):
     """Fetch rail lines within the specified bounding box."""
+    # Build geometry as a JSON string and URL-encode it
+    geometry = {
+        "xmin": bbox['xmin'],
+        "ymin": bbox['ymin'],
+        "xmax": bbox['xmax'],
+        "ymax": bbox['ymax'],
+        "spatialReference": {"wkid": 4326}
+    }
+    geometry_str = urllib.parse.quote_plus(str(geometry).replace("'", '"'))
+    where_str = urllib.parse.quote_plus("CLASS='1'")
     url = (
         f"{BASE_URL}"
-        f"?where=CLASS='1'"  # Filter for Class 1 railroads
+        f"?where={where_str}"
         f"&outFields=*"
         f"&f=geojson"
-        f"&geometry={bbox['xmin']},{bbox['ymin']},{bbox['xmax']},{bbox['ymax']}"
+        f"&geometry={geometry_str}"
         f"&geometryType=esriGeometryEnvelope"
         f"&inSR=4326"
         f"&spatialRel=esriSpatialRelIntersects"
