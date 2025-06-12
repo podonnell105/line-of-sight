@@ -51,74 +51,46 @@ def calculate_bounding_boxes(lat, lon, base_size, num_boxes=10):
     return boxes
 
 def fetch_rail_lines_in_bbox(bbox):
-    """Fetch rail lines within the specified bounding box."""
-    # Build geometry as a JSON string
-    geometry = {
-        "xmin": bbox['xmin'],
-        "ymin": bbox['ymin'],
-        "xmax": bbox['xmax'],
-        "ymax": bbox['ymax'],
-        "spatialReference": {"wkid": 4326}
-    }
-    
-    # Convert geometry to proper JSON string
-    geometry_str = json.dumps(geometry)
-    
-    # Build query parameters
+    """Fetch rail lines within the specified bounding box and filter for Class 1 railroads by owner."""
+    # Build query parameters (no where filter)
     params = {
-        'where': "CLASS='1'",
         'outFields': '*',
         'f': 'geojson',
-        'geometry': geometry_str,
         'geometryType': 'esriGeometryEnvelope',
-        'inSR': '4326',
-        'outSR': '4326',
-        'spatialRel': 'esriSpatialRelIntersects'
+        'spatialRel': 'esriSpatialRelIntersects',
+        'geometry': f"{bbox['xmin']},{bbox['ymin']},{bbox['xmax']},{bbox['ymax']}"
     }
-    
-    # Add headers
-    headers = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-    }
-    
-    print(f"Fetching Class 1 rail lines within bounding box: {bbox}")
+    print(f"Query parameters: {params}")
     try:
-        response = requests.get(BASE_URL, params=params, headers=headers)
+        response = requests.get(BASE_URL, params=params)
+        print(f"Request URL: {response.url}")
         response.raise_for_status()
-        
-        # Check if response is valid JSON
-        try:
-            response_json = response.json()
-            if 'error' in response_json:
-                print(f"API Error: {response_json['error']}")
-                return None
-        except json.JSONDecodeError:
-            print("Response is not valid JSON")
-            return None
-            
+        print(f"Response status: {response.status_code}")
+        print(f"Response headers: {response.headers}")
+        print(f"Response content: {response.text[:1000]}")
         try:
             gdf = gpd.read_file(BytesIO(response.content))
-            print(f"Fetched {len(gdf)} Class 1 rail line segments")
-            return gdf
+            print(f"Fetched {len(gdf)} rail line segments (all classes)")
         except Exception as e:
             print(f"GeoPandas could not read from BytesIO: {e}")
-            # Save to file for manual inspection
             debug_path = "debug_rail.json"
-            with open(debug_path, "wb") as f:
-                f.write(response.content)
+            with open(debug_path, "w") as f:
+                f.write(response.text)
             print(f"Saved response to {debug_path} for inspection.")
-            # Try reading from file
             try:
                 gdf = gpd.read_file(debug_path)
-                print(f"Fetched {len(gdf)} Class 1 rail line segments (from file)")
-                return gdf
+                print(f"Fetched {len(gdf)} rail line segments (from file)")
             except Exception as e2:
                 print(f"GeoPandas could not read from file: {e2}")
                 return None
+        # Filter for Class 1 by RROWNER1
+        class1_owners = ["BNSF", "UP", "NS", "CSXT", "KCS", "CN", "CPRS"]
+        class1_gdf = gdf[gdf["RROWNER1"].isin(class1_owners)]
+        print(f"Filtered to {len(class1_gdf)} Class 1 rail line segments")
+        return class1_gdf
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
-        if hasattr(e.response, 'text'):
+        if hasattr(e, 'response') and e.response is not None:
             print("Response text:", e.response.text)
         return None
 
