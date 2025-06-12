@@ -26,6 +26,13 @@ matplotlib.use('Agg')  # Set the backend to non-interactive
 import matplotlib.pyplot as plt
 import contextily as ctx
 from fetch_census_addresses import process_and_save_addresses
+import requests
+import math
+import time
+from sklearn.cluster import DBSCAN
+import numpy as np
+import rasterio
+from rasterio.merge import merge as raster_merge
 
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -73,7 +80,7 @@ def cleanup_old_files():
             try:
                 os.remove(filepath)
             except Exception as e:
-                logger.warning(f"Failed to remove old file {filepath}: {e}")
+                logging.warning(f"Failed to remove old file {filepath}: {e}")
 
 def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon, max_lat, max_lon, output_path):
     """Save analysis plot with the full bounding box extent"""
@@ -126,7 +133,7 @@ def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon
                 attribution_size=8
             )
         except Exception as e:
-            logger.warning(f"Could not add satellite basemap: {e}")
+            logging.warning(f"Could not add satellite basemap: {e}")
             try:
                 ctx.add_basemap(
                     ax, 
@@ -136,7 +143,7 @@ def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon
                     attribution_size=8
                 )
             except Exception as e:
-                logger.warning(f"Could not add terrain basemap: {e}")
+                logging.warning(f"Could not add terrain basemap: {e}")
         
         # Add title and labels
         ax.set_title('Address Line-of-Sight (LOS) to Rail Lines\nwith Satellite Imagery', 
@@ -172,8 +179,52 @@ def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon
         plt.close(fig)
         plt.ion()  # Turn interactive mode back on
     except Exception as e:
-        logger.error(f"Error creating plot: {str(e)}")
+        logging.error(f"Error creating plot: {str(e)}")
         raise
+
+def cluster_addresses_and_create_bboxes(gdf, eps_m=2000, min_samples=1, buffer_m=250):
+    """
+    Cluster addresses using DBSCAN and create non-overlapping bounding boxes for each cluster.
+    eps_m: max distance between addresses in a cluster (meters)
+    buffer_m: buffer to add around each cluster's bounding box (meters)
+    Returns: list of bounding boxes [minx, miny, maxx, maxy]
+    """
+    coords = np.array([(geom.x, geom.y) for geom in gdf.geometry])
+    db = DBSCAN(eps=eps_m, min_samples=min_samples, metric='euclidean').fit(coords)
+    gdf['cluster'] = db.labels_
+    bboxes = []
+    for cluster_id in sorted(gdf['cluster'].unique()):
+        cluster_gdf = gdf[gdf['cluster'] == cluster_id]
+        if cluster_gdf.empty:
+            continue
+        minx, miny, maxx, maxy = cluster_gdf.total_bounds
+        # Add buffer
+        minx -= buffer_m
+        miny -= buffer_m
+        maxx += buffer_m
+        maxy += buffer_m
+        bboxes.append([minx, miny, maxx, maxy])
+    # Merge overlapping boxes
+    boxes_gdf = gpd.GeoDataFrame(geometry=[box(*b) for b in bboxes], crs=gdf.crs)
+    merged = boxes_gdf.unary_union
+    if merged.geom_type == 'Polygon':
+        merged_boxes = [merged.bounds]
+    else:
+        merged_boxes = [geom.bounds for geom in merged.geoms]
+    return merged_boxes
+
+def get_opentopography_lidar_with_timeout(bbox, timeout=30):
+    """Get LiDAR data with timeout"""
+    try:
+        logging.info(f"Requesting LiDAR data for bbox: {bbox}")
+        start_time = time.time()
+        tif_file = get_opentopography_lidar(bbox)
+        elapsed = time.time() - start_time
+        logging.info(f"LiDAR data received in {elapsed:.1f} seconds")
+        return tif_file
+    except Exception as e:
+        logging.error(f"Error getting LiDAR data: {str(e)}")
+        return None
 
 @app.route('/')
 def index():
@@ -203,11 +254,11 @@ def upload_file():
                 return jsonify({'error': 'The uploaded file contains no data'}), 400
             return jsonify({'message': 'File uploaded successfully'})
         except Exception as e:
-            logger.error(f"Error reading GeoJSON file: {str(e)}")
+            logging.error(f"Error reading GeoJSON file: {str(e)}")
             return jsonify({'error': 'Invalid GeoJSON file'}), 400
             
     except Exception as e:
-        logger.error(f"Error in upload_file: {str(e)}")
+        logging.error(f"Error in upload_file: {str(e)}")
         return jsonify({'error': 'Server error during file upload'}), 500
 
 @app.route('/analyze', methods=['POST'])
@@ -225,24 +276,42 @@ def analyze():
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    logger.warning(f"Failed to remove {file_path}: {e}")
+                    logging.warning(f"Failed to remove {file_path}: {e}")
         
         data = request.json
-        center_lat = float(data['center_lat'])
-        center_lon = float(data['center_lon'])
-        radius_km = float(data['radius_km'])
-        rail_buffer_m = float(data['rail_buffer_m'])
-        shrub_height_threshold = float(data['shrub_height_threshold'])
+        state_abbr = data.get('state')
+        shrub_height_threshold = float(data.get('shrub_height_threshold', 0.5))
+        if not state_abbr or state_abbr not in STATES:
+            return jsonify({'error': 'Invalid or missing state'}), 400
+        logging.info(f"Starting analysis for state: {state_abbr}")
         
-        logger.info(f"Starting analysis for center: {center_lat}, {center_lon}")
-        
-        # Calculate bounding box
-        min_lat, min_lon, max_lat, max_lon = bbox_from_point_radius(
-            center_lat, center_lon, radius_km
-        )
-        
-        # 1. Fetch rail lines from shapefiles
-        logger.info("Fetching rail lines...")
+        # Get state bounds using Nominatim
+        url = f"https://nominatim.openstreetmap.org/search"
+        params = {
+            'q': f"{state_abbr}, USA",
+            'format': 'json',
+            'limit': 1
+        }
+        headers = {'User-Agent': 'LineOfSightAnalysis/1.0'}
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        data_json = response.json()
+        if not data_json:
+            return jsonify({'error': 'Could not get bounds for state'}), 400
+        bounds = data_json[0]['boundingbox']
+        min_lat = float(bounds[0])
+        max_lat = float(bounds[1])
+        min_lon = float(bounds[2])
+        max_lon = float(bounds[3])
+        center_lat = (min_lat + max_lat) / 2
+        center_lon = (min_lon + max_lon) / 2
+        radius_km = max(
+            abs(max_lat - min_lat) * 111.32,
+            abs(max_lon - min_lon) * 111.32
+        ) / 2
+
+        # 1. Fetch rail lines for the state
+        logging.info("Fetching rail lines...")
         rail_gdf = fetch_rail_lines_in_bbox({
             'xmin': min_lon,
             'ymin': min_lat,
@@ -251,144 +320,131 @@ def analyze():
         })
         if rail_gdf is None or rail_gdf.empty:
             return jsonify({'error': 'No rail lines found in the area'}), 400
-        
-        # 2. Load and filter addresses
-        logger.info("Loading and filtering addresses...")
+
+        # 2. Load all addresses for the state
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
         gdf = gpd.read_file(addr_path)
-        logger.info(f"Total addresses loaded from file: {len(gdf)}")
+        logging.info(f"Total addresses loaded from file: {len(gdf)}")
+
+        # 3. Create larger bounding boxes that efficiently cover rail segments and addresses
+        # Ensure CRS is set for all geometries
+        if rail_gdf.crs is None:
+            rail_gdf.set_crs(epsg=4326, inplace=True)
+        if gdf.crs is None:
+            gdf.set_crs(epsg=4326, inplace=True)
+
+        # Convert to metric CRS for accurate distance calculations
+        rail_gdf = rail_gdf.to_crs(epsg=3857)
+        gdf = gdf.to_crs(epsg=3857)
         
-        # Ensure number and street fields exist
-        if 'properties' in gdf.columns:
-            # Try to extract number and street from properties if they exist
-            gdf['number'] = gdf['properties'].apply(lambda x: x.get('number', '') if isinstance(x, dict) else '')
-            gdf['street'] = gdf['properties'].apply(lambda x: x.get('street', '') if isinstance(x, dict) else '')
-        
-        bbox_geom = box(min_lon, min_lat, max_lon, max_lat)
-        logger.info(f"Bounding box coordinates: min_lon={min_lon}, min_lat={min_lat}, max_lon={max_lon}, max_lat={max_lat}")
-        
-        # Check if geometries are valid
-        invalid_geoms = ~gdf.geometry.is_valid
-        if invalid_geoms.any():
-            logger.warning(f"Found {invalid_geoms.sum()} invalid geometries in the address data")
-            # Try to fix invalid geometries
-            gdf.geometry = gdf.geometry.buffer(0)
-        
-        addr_gdf = gdf[gdf.geometry.within(bbox_geom)].copy()
-        logger.info(f"Addresses within bounding box: {len(addr_gdf)}")
-        
-        if addr_gdf.empty:
-            # Try a more lenient check using intersects instead of within
-            addr_gdf = gdf[gdf.geometry.intersects(bbox_geom)].copy()
-            logger.info(f"Addresses intersecting bounding box: {len(addr_gdf)}")
-            
-            if addr_gdf.empty:
-                return jsonify({'error': 'No addresses found in the area'}), 400
-        
-        # 3. Get elevation data
-        logger.info("Getting elevation data...")
-        bbox = [min_lon, min_lat, max_lon, max_lat]
-        tif_file = get_opentopography_lidar(bbox)
-        if not tif_file:
-            return jsonify({'error': 'Failed to get elevation data'}), 400
-        
-        # Copy the elevation data to our temp directory
-        temp_tif = os.path.join(WEB_TEMP_DIR, os.path.basename(tif_file))
-        shutil.copy2(tif_file, temp_tif)
-        os.unlink(tif_file)  # Remove original temp file
-        
-        # 4. Process elevation and analyze vegetation
-        logger.info("Processing elevation data...")
-        processed_file = process_lidar_data(temp_tif)
-        if not processed_file:
-            return jsonify({'error': 'Failed to process elevation data'}), 400
-        
-        # Copy processed file to temp directory
-        temp_processed = os.path.join(WEB_TEMP_DIR, os.path.basename(processed_file))
-        shutil.copy2(processed_file, temp_processed)
-        os.unlink(processed_file)  # Remove original processed file
-        
-        elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(
-            temp_processed
-        )
-        
-        if elevation is None:
-            return jsonify({'error': 'Failed to analyze vegetation'}), 400
-        
-        # 5. Calculate LOS scores
-        logger.info("Calculating LOS scores...")
-        metric_crs = 3857
-        addr_gdf = addr_gdf.to_crs(epsg=metric_crs)
-        rail_gdf = rail_gdf.to_crs(epsg=metric_crs)
-        
-        rail_union = rail_gdf.union_all()
-        addr_gdf['distance_to_rail_m'] = addr_gdf.geometry.apply(
-            lambda pt: pt.distance(rail_union)
-        )
-        close_addr_gdf = addr_gdf[addr_gdf['distance_to_rail_m'] <= rail_buffer_m].copy()
-        
-        los_scores = []
-        for idx, addr in close_addr_gdf.iterrows():
-            nearest_rail_pt = gpd.GeoSeries(
-                [addr.geometry], crs=metric_crs
-            ).to_crs(epsg=4326)[0]
-            
-            score = calculate_los_score(
-                [min_lon, min_lat, max_lon, max_lat],
-                (addr.geometry.x, addr.geometry.y),
-                (nearest_rail_pt.x, nearest_rail_pt.y),
-                elevation,
-                tree_mask,
-                shrub_mask,
-                building_mask
-            )
-            los_scores.append(score)
-        
-        close_addr_gdf['los_score'] = los_scores
-        
-        # Fetch building footprints (do not save to file, just get the GeoDataFrame)
-        buildings_gdf = fetch_buildings_osm(min_lon, min_lat, max_lon, max_lat, None)
-        
-        # Save all outputs
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        
-        # Save clear LOS addresses CSV
-        clear_los_path = os.path.join(WEB_OUTPUT_DIR, f'clear_los_addresses_{timestamp}.csv')
-        clear_los_gdf = close_addr_gdf[close_addr_gdf['los_score'] == 1].copy()
-        # Ensure number and street fields are included in the output
-        if 'number' in clear_los_gdf.columns and 'street' in clear_los_gdf.columns:
-            clear_los_gdf = clear_los_gdf[['number', 'street', 'geometry', 'los_score', 'distance_to_rail_m'] + 
-                                        [col for col in clear_los_gdf.columns if col not in ['number', 'street', 'geometry', 'los_score', 'distance_to_rail_m']]]
-        clear_los_gdf.to_csv(clear_los_path, index=False)
-        
-        # Save analysis plot
-        plot_path = os.path.join(WEB_OUTPUT_DIR, f'address_los_scores_lidar_{timestamp}.png')
-        save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon, max_lat, max_lon, plot_path)
-        
-        # Calculate statistics
-        total_addresses = len(close_addr_gdf)
-        clear_los = len(close_addr_gdf[close_addr_gdf['los_score'] == 1])
-        blocked_los = len(close_addr_gdf[close_addr_gdf['los_score'] == 0])
-        clear_percentage = (clear_los / total_addresses * 100) if total_addresses > 0 else 0
-        
-        # Clean up old files
-        cleanup_old_files()
-        
-        logger.info("Analysis complete")
-        return jsonify({
-            'message': 'Analysis complete',
-            'statistics': {
-                'total_addresses': total_addresses,
-                'clear_los': clear_los,
-                'blocked_los': blocked_los,
-                'clear_percentage': clear_percentage
-            },
-            'plot_file': os.path.basename(plot_path),
-            'clear_los_file': os.path.basename(clear_los_path)
+        # Cluster addresses and create non-overlapping bounding boxes
+        merged_boxes = cluster_addresses_and_create_bboxes(gdf)
+        logging.info(f"Created {len(merged_boxes)} non-overlapping bounding boxes for LiDAR requests.")
+
+        # Fetch LiDAR for each bounding box and merge
+        tif_files = []
+        for i, bbox in enumerate(merged_boxes):
+            # Convert bbox from EPSG:3857 to EPSG:4326
+            minx, miny, maxx, maxy = bbox
+            bbox_geom = gpd.GeoSeries([box(minx, miny, maxx, maxy)], crs=3857).to_crs(epsg=4326)[0]
+            lon_min, lat_min, lon_max, lat_max = bbox_geom.bounds
+            bbox_wgs84 = [lon_min, lat_min, lon_max, lat_max]
+            logging.info(f"Fetching LiDAR for box {i+1}/{len(merged_boxes)}: {bbox_wgs84}")
+            tif_file = get_opentopography_lidar_with_timeout(bbox_wgs84)
+            if tif_file:
+                tif_files.append(tif_file)
+            else:
+                logging.warning(f"No LiDAR for box {i+1}, skipping.")
+        if not tif_files:
+            return jsonify({'error': 'No LiDAR data could be fetched for any area.'}), 400
+        # Merge all LiDAR tiles into one
+        srcs = [rasterio.open(f) for f in tif_files]
+        mosaic, out_trans = raster_merge(srcs)
+        merged_tif = os.path.join(WEB_TEMP_DIR, 'merged_lidar.tif')
+        out_meta = srcs[0].meta.copy()
+        out_meta.update({
+            "driver": "GTiff",
+            "height": mosaic.shape[1],
+            "width": mosaic.shape[2],
+            "transform": out_trans
         })
+        with rasterio.open(merged_tif, "w", **out_meta) as dest:
+            dest.write(mosaic)
+        for src in srcs:
+            src.close()
+        for f in tif_files:
+            os.unlink(f)
+        logging.info(f"Merged LiDAR data saved to {merged_tif}")
+        # Now use merged_tif for further processing (process_lidar_data, analyze_vegetation, LOS, etc.)
+        processed_file = process_lidar_data(merged_tif)
+        if not processed_file:
+            return jsonify({'error': 'Failed to process merged LiDAR data.'}), 400
+        temp_processed = os.path.join(WEB_TEMP_DIR, 'merged_processed.tif')
+        shutil.copy2(processed_file, temp_processed)
+        os.unlink(processed_file)
+        elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(temp_processed)
+        if elevation is None:
+            return jsonify({'error': 'Failed to analyze vegetation for merged LiDAR.'}), 400
+        # LOS analysis for all addresses
+        gdf['distance_to_rail_m'] = gdf.geometry.apply(
+            lambda pt: min(pt.distance(rail) for rail in rail_gdf.geometry)
+        )
+        close_addr_gdf = gdf[gdf['distance_to_rail_m'] <= 500].copy()
+        if not close_addr_gdf.empty:
+            los_scores = []
+            for idx, addr in close_addr_gdf.iterrows():
+                nearest_rail = min(rail_gdf.geometry, key=lambda x: addr.geometry.distance(x))
+                nearest_rail_pt = gpd.GeoSeries([nearest_rail], crs=3857).to_crs(epsg=4326)[0]
+                score = calculate_los_score(
+                    merged_boxes[0],  # Use the merged bounding box for LOS
+                    (addr.geometry.x, addr.geometry.y),
+                    (nearest_rail_pt.x, nearest_rail_pt.y),
+                    elevation,
+                    tree_mask,
+                    shrub_mask,
+                    building_mask
+                )
+                los_scores.append(score)
+            close_addr_gdf['los_score'] = los_scores
+            all_results = [close_addr_gdf.to_crs(epsg=4326)]
+        else:
+            return jsonify({'error': 'No addresses within 500m of rail.'}), 400
+        
+        # Aggregate all results
+        if not all_results:
+            return jsonify({'error': 'No addresses with LOS results found.'}), 400
+            
+        final_gdf = gpd.GeoDataFrame(pd.concat(all_results, ignore_index=True), crs='EPSG:4326')
+        plot_file = os.path.join(WEB_OUTPUT_DIR, 'address_los_scores.png')
+        
+        # For plotting, use the full state bounds
+        buildings_gdf = fetch_buildings_osm(min_lon, min_lat, max_lon, max_lat, None)
+        save_analysis_plot(final_gdf, rail_gdf.to_crs(epsg=4326), buildings_gdf, min_lat, min_lon, max_lat, max_lon, plot_file)
+        
+        clear_los_gdf = final_gdf[final_gdf['los_score'] == 1].copy()
+        clear_los_file = os.path.join(WEB_OUTPUT_DIR, 'clear_los_addresses.csv')
+        clear_los_gdf.to_csv(clear_los_file, index=False)
+        
+        statistics = {
+            'total_addresses': int(len(final_gdf)),
+            'clear_los': int(len(clear_los_gdf)),
+            'blocked_los': int((final_gdf['los_score'] == 0).sum()),
+            'clear_percentage': float(len(clear_los_gdf)) / max(1, len(final_gdf)) * 100
+        }
+        
+        return jsonify({
+            'success': True,
+            'plot_file': os.path.basename(plot_file),
+            'clear_los_file': os.path.basename(clear_los_file),
+            'statistics': statistics,
+            'center_lat': center_lat,
+            'center_lon': center_lon,
+            'radius_km': radius_km
+        })
+        
     except Exception as e:
-        logger.error(f"Error in analyze: {str(e)}")
-        return jsonify({'error': f'Analysis failed: {str(e)}'}), 500
+        logging.error(f"Error in analyze: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/results/<filename>')
 def get_results(filename):
@@ -399,7 +455,7 @@ def get_results(filename):
             return jsonify({'error': 'File not available for download'}), 403
         return send_file(os.path.join(WEB_OUTPUT_DIR, filename))
     except Exception as e:
-        logger.error(f"Error serving results file: {str(e)}")
+        logging.error(f"Error serving results file: {str(e)}")
         return jsonify({'error': 'Failed to serve results file'}), 500
 
 @app.route('/select_state', methods=['POST'])
@@ -417,8 +473,8 @@ def select_state():
             return jsonify({'error': f'Invalid state selection: {state_abbr}'}), 400
 
         logging.info(f"Processing addresses for state: {state_abbr}")
-        # Process addresses for the selected state
-        output_path = process_and_save_addresses(state_abbr)
+        # For initial test, limit to 100 buffers. Change max_buffers as needed.
+        output_path = process_and_save_addresses(state_abbr, max_buffers=25)
 
         if output_path:
             logging.info(f"Successfully processed addresses for {state_abbr}")

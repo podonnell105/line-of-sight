@@ -68,9 +68,10 @@ def fetch_addresses_from_osm(bbox):
         logging.error(f"Error fetching addresses from OSM: {str(e)}")
         return []
 
-def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=500):
+def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=500, max_buffers=None):
     """
     Fetch Class 1 rail lines, buffer by 500m, fetch addresses only near rails, and save to file.
+    Optionally limit to max_buffers buffers for testing.
     """
     os.makedirs(output_dir, exist_ok=True)
     existing_file = os.path.join(output_dir, 'uploaded_addresses.geojson')
@@ -116,6 +117,10 @@ def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=500):
     rail_gdf = rail_gdf.to_crs(epsg=3857)
     rail_gdf['buffer'] = rail_gdf.geometry.buffer(buffer_m)
     buffers = rail_gdf['buffer'].to_crs(epsg=4326)
+
+    # Optionally limit number of buffers for testing
+    if max_buffers is not None:
+        buffers = buffers[:max_buffers]
 
     # 4. For each buffer, get its bounding box and fetch addresses
     all_addresses = []
