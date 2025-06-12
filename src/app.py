@@ -444,15 +444,21 @@ def analyze():
             'clear_percentage': float(len(clear_los_gdf)) / max(1, len(final_gdf)) * 100
         }
         
-        # Ensure geometry column exists before setting CRS
-        if 'geometry' not in close_addr_gdf.columns or close_addr_gdf.geometry.is_empty.any():
-            logging.error("GeoDataFrame is missing a valid geometry column.")
-            return jsonify({'error': 'GeoDataFrame is missing a valid geometry column.'}), 400
+        # Check and log geometry status for close_addr_gdf
+        if 'geometry' not in close_addr_gdf.columns:
+            logging.error("close_addr_gdf is missing a geometry column.")
+            return jsonify({'error': 'close_addr_gdf is missing a geometry column.'}), 400
+        if close_addr_gdf.geometry.is_empty.any():
+            logging.error("close_addr_gdf contains empty geometries.")
+            return jsonify({'error': 'close_addr_gdf contains empty geometries.'}), 400
 
-        # Ensure geometry column exists before setting CRS for final_gdf
-        if 'geometry' not in final_gdf.columns or final_gdf.geometry.is_empty.any():
-            logging.error("Final GeoDataFrame is missing a valid geometry column.")
-            return jsonify({'error': 'Final GeoDataFrame is missing a valid geometry column.'}), 400
+        # Check and log geometry status for final_gdf
+        if 'geometry' not in final_gdf.columns:
+            logging.error("final_gdf is missing a geometry column.")
+            return jsonify({'error': 'final_gdf is missing a geometry column.'}), 400
+        if final_gdf.geometry.is_empty.any():
+            logging.error("final_gdf contains empty geometries.")
+            return jsonify({'error': 'final_gdf contains empty geometries.'}), 400
         
         return jsonify({
             'success': True,
