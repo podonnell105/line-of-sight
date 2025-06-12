@@ -1,4 +1,4 @@
-from fetch_lidar import get_opentopography_lidar, process_lidar_data, analyze_vegetation
+from fetch_lidar import get_opentopography_lidar, process_and_analyze_lidar_data
 from process_rail import fetch_rail_lines_in_bbox
 import sys
 import os
@@ -218,13 +218,11 @@ def main():
 
     # 5. Process elevation data and analyze vegetation
     print("Processing elevation data and analyzing vegetation...")
-    processed_file = process_lidar_data(tif_file)
+    processed_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = process_and_analyze_lidar_data(tif_file)
     if not processed_file:
         print("Failed to process elevation data")
         return
 
-    elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(
-        processed_file)
     if elevation is None:
         print("Failed to analyze vegetation")
         return

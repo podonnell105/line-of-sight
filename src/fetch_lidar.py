@@ -61,9 +61,11 @@ def get_opentopography_lidar(bbox):
         print(f"Unexpected error: {e}")
         return None
 
-def process_lidar_data(tif_file, output_dir='data', tile_size=1000):
+def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
     """
-    Process downloaded elevation data and extract information in tiles to manage memory usage
+    Process downloaded elevation data and analyze vegetation in a single pass
+    Using memory-efficient processing with small tiles and float32
+    Returns paths to saved intermediate files
     """
     try:
         # Create output directory if it doesn't exist
@@ -79,160 +81,192 @@ def process_lidar_data(tif_file, output_dir='data', tile_size=1000):
             n_tiles_h = (height + tile_size - 1) // tile_size
             n_tiles_w = (width + tile_size - 1) // tile_size
             
-            # Create output file
-            output_file = os.path.join(output_dir, 'elevation_data.tif')
+            # Initialize output files
+            elevation_file = os.path.join(output_dir, 'elevation_data.tif')
+            slope_file = os.path.join(output_dir, 'slope_data.tif')
+            variance_file = os.path.join(output_dir, 'variance_data.tif')
+            tree_mask_file = os.path.join(output_dir, 'tree_mask.tif')
+            shrub_mask_file = os.path.join(output_dir, 'shrub_mask.tif')
+            building_mask_file = os.path.join(output_dir, 'building_mask.tif')
             
-            # Process in tiles
-            for i in range(n_tiles_h):
-                for j in range(n_tiles_w):
-                    # Calculate window
-                    window = rasterio.windows.Window(
-                        j * tile_size,
-                        i * tile_size,
-                        min(tile_size, width - j * tile_size),
-                        min(tile_size, height - i * tile_size)
-                    )
-                    
-                    # Read the tile
-                    elevation = src.read(1, window=window)
-                    
-                    # Write the tile
-                    if i == 0 and j == 0:
-                        # First tile - create new file
-                        with rasterio.open(output_file, 'w',
-                                         driver='GTiff',
-                                         height=height,
-                                         width=width,
-                                         count=1,
-                                         dtype=elevation.dtype,
-                                         crs=src.crs,
-                                         transform=src.transform) as dst:
-                            dst.write(elevation, 1, window=window)
-                    else:
-                        # Subsequent tiles - update existing file
-                        with rasterio.open(output_file, 'r+') as dst:
-                            dst.write(elevation, 1, window=window)
+            # Create output files
+            with rasterio.open(elevation_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.float32,
+                             crs=src.crs,
+                             transform=src.transform) as dst_elev, \
+                 rasterio.open(slope_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.float32,
+                             crs=src.crs,
+                             transform=src.transform) as dst_slope, \
+                 rasterio.open(variance_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.float32,
+                             crs=src.crs,
+                             transform=src.transform) as dst_var, \
+                 rasterio.open(tree_mask_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.uint8,
+                             crs=src.crs,
+                             transform=src.transform) as dst_tree, \
+                 rasterio.open(shrub_mask_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.uint8,
+                             crs=src.crs,
+                             transform=src.transform) as dst_shrub, \
+                 rasterio.open(building_mask_file, 'w',
+                             driver='GTiff',
+                             height=height,
+                             width=width,
+                             count=1,
+                             dtype=np.uint8,
+                             crs=src.crs,
+                             transform=src.transform) as dst_building:
                 
-                print(f"Processed tile row {i+1}/{n_tiles_h}")
-                
-        print(f"Processed elevation data to {output_file}")
-        
-        # Clean up the temporary file
-        os.unlink(tif_file)
-        
-        return output_file
-        
+                # Process in tiles
+                for i in range(n_tiles_h):
+                    for j in range(n_tiles_w):
+                        # Calculate window
+                        window = rasterio.windows.Window(
+                            j * tile_size,
+                            i * tile_size,
+                            min(tile_size, width - j * tile_size),
+                            min(tile_size, height - i * tile_size)
+                        )
+                        
+                        # Read the tile
+                        tile_elevation = src.read(1, window=window).astype(np.float32)
+                        
+                        # Calculate slope and aspect for the tile using vectorized operations
+                        dy, dx = np.gradient(tile_elevation)
+                        tile_slope_magnitude = np.sqrt(dx**2 + dy**2)
+                        
+                        # Calculate local variance using a rolling window approach
+                        window_size = 3
+                        kernel = np.ones((window_size, window_size), dtype=np.float32) / (window_size * window_size)
+                        mean = np.convolve(tile_elevation.ravel(), kernel.ravel(), mode='same').reshape(tile_elevation.shape)
+                        mean_sq = np.convolve((tile_elevation**2).ravel(), kernel.ravel(), mode='same').reshape(tile_elevation.shape)
+                        tile_local_variance = mean_sq - mean**2
+                        
+                        # Calculate thresholds once per tile
+                        var_75 = np.percentile(tile_local_variance, 75)
+                        var_50 = np.percentile(tile_local_variance, 50)
+                        var_90 = np.percentile(tile_local_variance, 90)
+                        slope_50 = np.percentile(tile_slope_magnitude, 50)
+                        slope_25 = np.percentile(tile_slope_magnitude, 25)
+                        slope_90 = np.percentile(tile_slope_magnitude, 90)
+                        
+                        # Identify features in the tile using vectorized operations
+                        tile_tree_mask = (tile_local_variance > var_75) & \
+                                       (tile_slope_magnitude > slope_50)
+                        
+                        tile_shrub_mask = (tile_local_variance > var_50) & \
+                                        (tile_local_variance <= var_75) & \
+                                        (tile_slope_magnitude > slope_25)
+                        
+                        tile_building_mask = (tile_local_variance > var_90) & \
+                                           (tile_slope_magnitude > slope_90)
+                        
+                        # Write all data to their respective files
+                        dst_elev.write(tile_elevation, 1, window=window)
+                        dst_slope.write(tile_slope_magnitude, 1, window=window)
+                        dst_var.write(tile_local_variance, 1, window=window)
+                        dst_tree.write(tile_tree_mask.astype(np.uint8), 1, window=window)
+                        dst_shrub.write(tile_shrub_mask.astype(np.uint8), 1, window=window)
+                        dst_building.write(tile_building_mask.astype(np.uint8), 1, window=window)
+                        
+                        # Clean up temporary arrays
+                        del tile_elevation, dy, dx, tile_slope_magnitude
+                        del mean, mean_sq, tile_local_variance
+                        del tile_tree_mask, tile_shrub_mask, tile_building_mask
+                    
+                    print(f"Processed tile row {i+1}/{n_tiles_h}")
+            
+            # Clean up the temporary file
+            os.unlink(tif_file)
+            
+            # Return paths to all saved files
+            return {
+                'elevation': elevation_file,
+                'slope': slope_file,
+                'variance': variance_file,
+                'tree_mask': tree_mask_file,
+                'shrub_mask': shrub_mask_file,
+                'building_mask': building_mask_file
+            }
+            
     except Exception as e:
-        print(f"Error processing elevation data: {e}")
+        print(f"Error processing and analyzing elevation data: {e}")
         if os.path.exists(tif_file):
             os.unlink(tif_file)
         return None
 
-def analyze_vegetation(tif_file, tile_size=1000):
+def load_processed_data(file_paths):
     """
-    Analyze elevation data to identify trees, shrubs, and other obstructions in tiles
+    Load processed data from saved files
     """
     try:
-        # Read the GeoTIFF file
-        with rasterio.open(tif_file) as src:
-            # Get the dimensions
-            height = src.height
-            width = src.width
+        with rasterio.open(file_paths['elevation']) as src:
+            elevation = src.read(1)
+        with rasterio.open(file_paths['slope']) as src:
+            slope = src.read(1)
+        with rasterio.open(file_paths['variance']) as src:
+            variance = src.read(1)
+        with rasterio.open(file_paths['tree_mask']) as src:
+            tree_mask = src.read(1).astype(bool)
+        with rasterio.open(file_paths['shrub_mask']) as src:
+            shrub_mask = src.read(1).astype(bool)
+        with rasterio.open(file_paths['building_mask']) as src:
+            building_mask = src.read(1).astype(bool)
             
-            # Calculate number of tiles
-            n_tiles_h = (height + tile_size - 1) // tile_size
-            n_tiles_w = (width + tile_size - 1) // tile_size
-            
-            # Initialize arrays
-            elevation = np.zeros((height, width), dtype=np.float32)
-            slope_magnitude = np.zeros((height, width), dtype=np.float32)
-            local_variance = np.zeros((height, width), dtype=np.float32)
-            tree_mask = np.zeros((height, width), dtype=bool)
-            shrub_mask = np.zeros((height, width), dtype=bool)
-            building_mask = np.zeros((height, width), dtype=bool)
-            
-            # Process in tiles
-            for i in range(n_tiles_h):
-                for j in range(n_tiles_w):
-                    # Calculate window
-                    window = rasterio.windows.Window(
-                        j * tile_size,
-                        i * tile_size,
-                        min(tile_size, width - j * tile_size),
-                        min(tile_size, height - i * tile_size)
-                    )
-                    
-                    # Read the tile
-                    tile_elevation = src.read(1, window=window)
-                    
-                    # Calculate slope and aspect for the tile
-                    tile_slope = np.gradient(tile_elevation)
-                    tile_slope_magnitude = np.sqrt(tile_slope[0]**2 + tile_slope[1]**2)
-                    
-                    # Calculate local variance for the tile
-                    window_size = 3
-                    tile_local_variance = np.zeros_like(tile_elevation)
-                    for y in range(window_size, tile_elevation.shape[0] - window_size):
-                        for x in range(window_size, tile_elevation.shape[1] - window_size):
-                            tile_window = tile_elevation[y-window_size:y+window_size+1, 
-                                                       x-window_size:x+window_size+1]
-                            tile_local_variance[y,x] = np.var(tile_window)
-                    
-                    # Identify features in the tile
-                    tile_tree_mask = (tile_local_variance > np.percentile(tile_local_variance, 75)) & \
-                                   (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 50))
-                    
-                    tile_shrub_mask = (tile_local_variance > np.percentile(tile_local_variance, 50)) & \
-                                    (tile_local_variance <= np.percentile(tile_local_variance, 75)) & \
-                                    (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 25))
-                    
-                    tile_building_mask = (tile_local_variance > np.percentile(tile_local_variance, 90)) & \
-                                       (tile_slope_magnitude > np.percentile(tile_slope_magnitude, 90))
-                    
-                    # Store results
-                    elevation[window.row_off:window.row_off + window.height,
-                            window.col_off:window.col_off + window.width] = tile_elevation
-                    slope_magnitude[window.row_off:window.row_off + window.height,
-                                 window.col_off:window.col_off + window.width] = tile_slope_magnitude
-                    local_variance[window.row_off:window.row_off + window.height,
-                                window.col_off:window.col_off + window.width] = tile_local_variance
-                    tree_mask[window.row_off:window.row_off + window.height,
-                            window.col_off:window.col_off + window.width] = tile_tree_mask
-                    shrub_mask[window.row_off:window.row_off + window.height,
-                             window.col_off:window.col_off + window.width] = tile_shrub_mask
-                    building_mask[window.row_off:window.row_off + window.height,
-                               window.col_off:window.col_off + window.width] = tile_building_mask
-                
-                print(f"Processed tile row {i+1}/{n_tiles_h}")
-            
-            # Calculate statistics
-            stats = {
-                'total_points': elevation.size,
-                'tree_points': np.sum(tree_mask),
-                'shrub_points': np.sum(shrub_mask),
-                'building_points': np.sum(building_mask),
-                'max_elevation': np.max(elevation),
-                'min_elevation': np.min(elevation),
-                'mean_elevation': np.mean(elevation),
-                'max_slope': np.max(slope_magnitude),
-                'mean_slope': np.mean(slope_magnitude)
-            }
-            
-            return elevation, slope_magnitude, local_variance, tree_mask, shrub_mask, building_mask, stats
-            
+        return elevation, slope, variance, tree_mask, shrub_mask, building_mask
     except Exception as e:
-        print(f"Error analyzing vegetation: {e}")
-        return None, None, None, None, None, None, None
+        print(f"Error loading processed data: {e}")
+        return None, None, None, None, None, None
 
 def visualize_vegetation(bbox, tif_file):
     """
     Create a visualization of the vegetation and obstruction analysis
     """
     try:
-        # Analyze the data
-        elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(tif_file)
+        # Process and analyze the data
+        file_paths = process_and_analyze_lidar_data(tif_file)
+        if not file_paths:
+            return
+            
+        # Load the processed data
+        elevation, slope, variance, tree_mask, shrub_mask, building_mask = load_processed_data(file_paths)
         if elevation is None:
             return
+            
+        # Calculate statistics
+        stats = {
+            'total_points': elevation.size,
+            'tree_points': np.sum(tree_mask),
+            'shrub_points': np.sum(shrub_mask),
+            'building_points': np.sum(building_mask),
+            'max_elevation': np.max(elevation),
+            'min_elevation': np.min(elevation),
+            'mean_elevation': np.mean(elevation),
+            'max_slope': np.max(slope),
+            'mean_slope': np.mean(slope)
+        }
             
         # Create figure with four subplots
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 20))
@@ -282,6 +316,9 @@ def visualize_vegetation(bbox, tif_file):
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         print(f"Saved visualization to {output_file}")
         plt.close(fig)
+        
+        # Clean up loaded data
+        del elevation, slope, variance, tree_mask, shrub_mask, building_mask
         
     except Exception as e:
         print(f"Error creating visualization: {e}")
@@ -345,16 +382,24 @@ def calculate_los_score(bbox, address_point, rail_point, elevation, tree_mask, s
         print(f"Error calculating LOS score: {e}")
         return 0
 
-def analyze_los(bbox, elevation, tree_mask, shrub_mask, building_mask, addresses, rail_points):
+def analyze_los(bbox, file_paths, addresses, rail_points):
     """
     Analyze line of sight for multiple addresses
     """
     try:
+        # Load the processed data
+        elevation, slope, variance, tree_mask, shrub_mask, building_mask = load_processed_data(file_paths)
+        if elevation is None:
+            return None
+            
         los_scores = []
         for addr_point, rail_point in zip(addresses, rail_points):
             score = calculate_los_score(bbox, addr_point, rail_point, 
                                       elevation, tree_mask, shrub_mask, building_mask)
             los_scores.append(score)
+            
+        # Clean up loaded data
+        del elevation, slope, variance, tree_mask, shrub_mask, building_mask
             
         return los_scores
         
@@ -362,11 +407,16 @@ def analyze_los(bbox, elevation, tree_mask, shrub_mask, building_mask, addresses
         print(f"Error analyzing LOS: {e}")
         return None
 
-def visualize_los(bbox, elevation, tree_mask, shrub_mask, building_mask, addresses, rail_points, los_scores):
+def visualize_los(bbox, file_paths, addresses, rail_points, los_scores):
     """
     Create a visualization of the line-of-sight analysis
     """
     try:
+        # Load the processed data
+        elevation, slope, variance, tree_mask, shrub_mask, building_mask = load_processed_data(file_paths)
+        if elevation is None:
+            return
+            
         # Create figure with four subplots
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(20, 20))
         
@@ -403,9 +453,7 @@ def visualize_los(bbox, elevation, tree_mask, shrub_mask, building_mask, address
         ax2.set_title('Vegetation and Obstruction Classification')
         
         # Plot 3: Slope
-        slope = np.gradient(elevation)
-        slope_magnitude = np.sqrt(slope[0]**2 + slope[1]**2)
-        im3 = ax3.imshow(slope_magnitude, cmap='viridis')
+        im3 = ax3.imshow(slope, cmap='viridis')
         plt.colorbar(im3, ax=ax3, label='Slope (degrees)')
         ax3.set_title('Slope Analysis')
         
@@ -433,6 +481,9 @@ def visualize_los(bbox, elevation, tree_mask, shrub_mask, building_mask, address
         print(f"Saved visualization to {output_file}")
         plt.close(fig)
         
+        # Clean up loaded data
+        del elevation, slope, variance, tree_mask, shrub_mask, building_mask
+        
     except Exception as e:
         print(f"Error creating visualization: {e}")
         import traceback
@@ -446,12 +497,9 @@ def main():
     tif_file = get_opentopography_lidar(bbox)
     if tif_file:
         # Process the downloaded data
-        processed_file = process_lidar_data(tif_file)
-        if processed_file:
-            print(f"Successfully processed elevation data to {processed_file}")
-            
-            # Analyze vegetation and obstructions
-            elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(processed_file)
+        file_paths = process_and_analyze_lidar_data(tif_file)
+        if file_paths:
+            print(f"Successfully processed and analyzed elevation data")
             
             # Example addresses and rail points (you would get these from your address data)
             # These are just example points - replace with your actual data
@@ -468,14 +516,12 @@ def main():
             ]
             
             # Calculate LOS scores
-            los_scores = analyze_los(bbox, elevation, tree_mask, shrub_mask, building_mask, 
-                                   addresses, rail_points)
+            los_scores = analyze_los(bbox, file_paths, addresses, rail_points)
             
             # Create visualization
-            visualize_los(bbox, elevation, tree_mask, shrub_mask, building_mask,
-                         addresses, rail_points, los_scores)
+            visualize_los(bbox, file_paths, addresses, rail_points, los_scores)
         else:
-            print("Failed to process elevation data")
+            print("Failed to process and analyze elevation data")
     else:
         print("Failed to download elevation data")
 

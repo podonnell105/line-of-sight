@@ -7,8 +7,7 @@ from address_los_score_lidar import (
     fetch_rail_lines_in_bbox,
     fetch_buildings_osm,
     get_opentopography_lidar,
-    process_lidar_data,
-    analyze_vegetation,
+    process_and_analyze_lidar_data,
     calculate_los_score
 )
 import tempfile
@@ -386,14 +385,14 @@ def analyze():
         for f in tif_files:
             os.unlink(f)
         logging.info(f"Merged LiDAR data saved to {merged_tif}")
-        # Now use merged_tif for further processing (process_lidar_data, analyze_vegetation, LOS, etc.)
-        processed_file = process_lidar_data(merged_tif)
+        # Now use merged_tif for further processing (process_and_analyze_lidar_data, calculate_los_score, etc.)
+        processed_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = process_and_analyze_lidar_data(merged_tif)
         if not processed_file:
             return jsonify({'error': 'Failed to process merged LiDAR data.'}), 400
         temp_processed = os.path.join(WEB_TEMP_DIR, 'merged_processed.tif')
         shutil.copy2(processed_file, temp_processed)
         os.unlink(processed_file)
-        elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = analyze_vegetation(temp_processed)
+        
         if elevation is None:
             return jsonify({'error': 'Failed to analyze vegetation for merged LiDAR.'}), 400
         # LOS analysis for all addresses
@@ -485,7 +484,7 @@ def select_state():
 
         logging.info(f"Processing addresses for state: {state_abbr}")
         # For initial test, limit to 100 buffers. Change max_buffers as needed.
-        output_path = process_and_save_addresses(state_abbr, max_buffers=25)
+        output_path = process_and_save_addresses(state_abbr, max_buffers=10)
 
         if output_path:
             logging.info(f"Successfully processed addresses for {state_abbr}")

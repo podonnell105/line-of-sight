@@ -68,7 +68,7 @@ def fetch_addresses_from_osm(bbox):
         logging.error(f"Error fetching addresses from OSM: {str(e)}")
         return []
 
-def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=500, max_buffers=None):
+def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=100, max_buffers=None):
     """
     Fetch Class 1 rail lines, buffer by 500m, fetch addresses only near rails, and save to file.
     Optionally limit to max_buffers buffers for testing.
