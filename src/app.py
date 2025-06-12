@@ -12,7 +12,7 @@ from address_los_score_lidar import (
 )
 import tempfile
 import json
-from shapely.geometry import Point, box
+from shapely.geometry import Point, box, shape
 import folium
 from folium.plugins import Draw
 import pandas as pd
