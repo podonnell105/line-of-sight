@@ -405,10 +405,12 @@ def analyze():
             for idx, addr in close_addr_gdf.iterrows():
                 nearest_rail = min(rail_gdf.geometry, key=lambda x: addr.geometry.distance(x))
                 nearest_rail_pt = gpd.GeoSeries([nearest_rail], crs=3857).to_crs(epsg=4326)[0]
+                # Extract the first coordinate as a point
+                rail_point = nearest_rail_pt.coords[0]
                 score = calculate_los_score(
                     merged_boxes[0],  # Use the merged bounding box for LOS
                     (addr.geometry.x, addr.geometry.y),
-                    (nearest_rail_pt.x, nearest_rail_pt.y),
+                    rail_point,  # Use the extracted point
                     elevation,
                     tree_mask,
                     shrub_mask,
