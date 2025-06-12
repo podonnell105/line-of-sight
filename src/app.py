@@ -235,16 +235,34 @@ def analyze():
         logger.info("Loading and filtering addresses...")
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
         gdf = gpd.read_file(addr_path)
+        logger.info(f"Total addresses loaded from file: {len(gdf)}")
+        
         # Ensure number and street fields exist
         if 'properties' in gdf.columns:
             # Try to extract number and street from properties if they exist
             gdf['number'] = gdf['properties'].apply(lambda x: x.get('number', '') if isinstance(x, dict) else '')
             gdf['street'] = gdf['properties'].apply(lambda x: x.get('street', '') if isinstance(x, dict) else '')
+        
         bbox_geom = box(min_lon, min_lat, max_lon, max_lat)
+        logger.info(f"Bounding box coordinates: min_lon={min_lon}, min_lat={min_lat}, max_lon={max_lon}, max_lat={max_lat}")
+        
+        # Check if geometries are valid
+        invalid_geoms = ~gdf.geometry.is_valid
+        if invalid_geoms.any():
+            logger.warning(f"Found {invalid_geoms.sum()} invalid geometries in the address data")
+            # Try to fix invalid geometries
+            gdf.geometry = gdf.geometry.buffer(0)
+        
         addr_gdf = gdf[gdf.geometry.within(bbox_geom)].copy()
+        logger.info(f"Addresses within bounding box: {len(addr_gdf)}")
         
         if addr_gdf.empty:
-            return jsonify({'error': 'No addresses found in the area'}), 400
+            # Try a more lenient check using intersects instead of within
+            addr_gdf = gdf[gdf.geometry.intersects(bbox_geom)].copy()
+            logger.info(f"Addresses intersecting bounding box: {len(addr_gdf)}")
+            
+            if addr_gdf.empty:
+                return jsonify({'error': 'No addresses found in the area'}), 400
         
         # 3. Get elevation data
         logger.info("Getting elevation data...")

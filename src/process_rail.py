@@ -48,9 +48,10 @@ def calculate_bounding_boxes(lat, lon, base_size, num_boxes=10):
 
 def fetch_rail_lines_in_bbox(bbox):
     """Fetch rail lines within the specified bounding box."""
+    # Add where clause to filter for Class 1 railroads
     url = (
         f"{BASE_URL}"
-        f"?where=1%3D1"
+        f"?where=CLASS='1'"  # Filter for Class 1 railroads
         f"&outFields=*"
         f"&f=geojson"
         f"&geometry={bbox['xmin']},{bbox['ymin']},{bbox['xmax']},{bbox['ymax']}"
@@ -58,10 +59,10 @@ def fetch_rail_lines_in_bbox(bbox):
         f"&inSR=4326"
         f"&spatialRel=esriSpatialRelIntersects"
     )
-    print(f"Fetching rail lines within bounding box: {bbox}")
+    print(f"Fetching Class 1 rail lines within bounding box: {bbox}")
     try:
         gdf = gpd.read_file(url)
-        print(f"Fetched {len(gdf)} rail line segments")
+        print(f"Fetched {len(gdf)} Class 1 rail line segments")
         return gdf
     except Exception as e:
         print(f"Error fetching data: {e}")
