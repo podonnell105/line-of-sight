@@ -64,9 +64,27 @@ def fetch_rail_lines_in_bbox(bbox):
     try:
         response = requests.get(url)
         response.raise_for_status()
-        gdf = gpd.read_file(BytesIO(response.content))
-        print(f"Fetched {len(gdf)} Class 1 rail line segments")
-        return gdf
+        print("Response headers:", response.headers)
+        print("Response content (first 500 chars):", response.content[:500])
+        try:
+            gdf = gpd.read_file(BytesIO(response.content))
+            print(f"Fetched {len(gdf)} Class 1 rail line segments")
+            return gdf
+        except Exception as e:
+            print(f"GeoPandas could not read from BytesIO: {e}")
+            # Save to file for manual inspection
+            debug_path = "debug_rail.json"
+            with open(debug_path, "wb") as f:
+                f.write(response.content)
+            print(f"Saved response to {debug_path} for inspection.")
+            # Try reading from file
+            try:
+                gdf = gpd.read_file(debug_path)
+                print(f"Fetched {len(gdf)} Class 1 rail line segments (from file)")
+                return gdf
+            except Exception as e2:
+                print(f"GeoPandas could not read from file: {e2}")
+                return None
     except Exception as e:
         print(f"Error fetching data: {e}")
         return None
