@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from shapely.geometry import Point, box
+import requests
+from io import BytesIO
 
 # FRA MainLine MapServer REST endpoint
 BASE_URL = "https://fragis.fra.dot.gov/arcgis/rest/services/FRA/MainLine/MapServer/0/query"
@@ -48,7 +50,6 @@ def calculate_bounding_boxes(lat, lon, base_size, num_boxes=10):
 
 def fetch_rail_lines_in_bbox(bbox):
     """Fetch rail lines within the specified bounding box."""
-    # Add where clause to filter for Class 1 railroads
     url = (
         f"{BASE_URL}"
         f"?where=CLASS='1'"  # Filter for Class 1 railroads
@@ -61,7 +62,9 @@ def fetch_rail_lines_in_bbox(bbox):
     )
     print(f"Fetching Class 1 rail lines within bounding box: {bbox}")
     try:
-        gdf = gpd.read_file(url)
+        response = requests.get(url)
+        response.raise_for_status()
+        gdf = gpd.read_file(BytesIO(response.content))
         print(f"Fetched {len(gdf)} Class 1 rail line segments")
         return gdf
     except Exception as e:
