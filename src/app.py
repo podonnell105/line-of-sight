@@ -431,6 +431,9 @@ def analyze():
         
         # For plotting, use the full state bounds
         buildings_gdf = fetch_buildings_osm(min_lon, min_lat, max_lon, max_lat, None)
+        if not isinstance(buildings_gdf, gpd.GeoDataFrame) or 'geometry' not in buildings_gdf.columns:
+            logging.warning("Fetched buildings_gdf is not a valid GeoDataFrame with a geometry column. Creating empty GeoDataFrame.")
+            buildings_gdf = gpd.GeoDataFrame(geometry=[], crs='EPSG:4326')
         save_analysis_plot(final_gdf, rail_gdf.to_crs(epsg=4326), buildings_gdf, min_lat, min_lon, max_lat, max_lon, plot_file)
         
         clear_los_gdf = final_gdf[final_gdf['los_score'] == 1].copy()
