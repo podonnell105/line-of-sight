@@ -19,6 +19,20 @@
         .results {
             display: none;
         }
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        .error {
+            color: red;
+            display: none;
+            margin: 20px 0;
+        }
+        .success {
+            color: green;
+            display: none;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -29,15 +43,7 @@
                 <h2>Line of Sight Analysis</h2>
                 <p class="text-muted">Analyze line of sight between addresses and rail lines</p>
 
-                <!-- File Upload -->
-                <div class="mb-4">
-                    <h4>1. Upload Addresses</h4>
-                    <p class="small text-muted">
-                        Get your GeoJSON file from <a href="https://batch.openaddresses.io/data#map=0/0/0" target="_blank">OpenAddresses</a>
-                    </p>
-                    <input type="file" class="form-control" id="fileUpload" accept=".geojson">
-                    <div id="uploadStatus" class="mt-2"></div>
-                </div>
+              
 
                 <!-- Analysis Parameters -->
                 <div class="mb-4">
@@ -68,6 +74,16 @@
                         <div class="mb-3">
                             <label class="form-label">Shrub Height Threshold (m)</label>
                             <input type="number" class="form-control" id="shrubHeight" value="1.5" min="0.5" max="3.0" step="0.5" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Select State</label>
+                            <select class="form-control" id="stateSelect" required>
+                                <option value="">Choose a state...</option>
+                                {% for abbr, name in states.items() %}
+                                <option value="{{ abbr }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100" id="analyzeBtn" disabled>
@@ -185,34 +201,7 @@
             });
         });
 
-        // Handle file upload
-        document.getElementById('fileUpload').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    document.getElementById('uploadStatus').innerHTML = 
-                        '<div class="alert alert-success">File uploaded successfully</div>';
-                    document.getElementById('analyzeBtn').disabled = false;
-                } else {
-                    document.getElementById('uploadStatus').innerHTML = 
-                        `<div class="alert alert-danger">${data.error}</div>`;
-                }
-            } catch (error) {
-                document.getElementById('uploadStatus').innerHTML = 
-                    '<div class="alert alert-danger">Error uploading file</div>';
-            }
-        });
+       
 
         // Handle form submission
         document.getElementById('analysisForm').addEventListener('submit', async function(e) {
@@ -345,6 +334,87 @@
                 alert('Error during analysis: ' + error.message);
             }
         });
+
+        // Add this JavaScript to handle state selection
+        document.getElementById('stateSelect').addEventListener('change', function() {
+            const state = this.value;
+            if (state) {
+                // Disable the analyze button while loading
+                document.getElementById('analyzeBtn').disabled = true;
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('state', state);
+                
+                // Fetch addresses for selected state
+                fetch('/select_state', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Enable the analyze button
+                        document.getElementById('analyzeBtn').disabled = false;
+                        // Show success message
+                        alert(data.message);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading addresses');
+                });
+            }
+        });
+
+        function fetchAddresses() {
+            const stateSelect = document.getElementById('stateSelect');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const success = document.getElementById('success');
+            
+            if (!stateSelect.value) {
+                error.textContent = 'Please select a state';
+                error.style.display = 'block';
+                success.style.display = 'none';
+                return;
+            }
+            
+            // Show loading, hide messages
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            success.style.display = 'none';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('state', stateSelect.value);
+            
+            // Send request
+            fetch('/select_state', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.error) {
+                    error.textContent = data.error;
+                    error.style.display = 'block';
+                } else {
+                    success.textContent = data.message;
+                    success.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                loading.style.display = 'none';
+                error.textContent = 'An error occurred while processing the request';
+                error.style.display = 'block';
+                console.error('Error:', err);
+            });
+        }
     </script>
 </body>
 </html> 

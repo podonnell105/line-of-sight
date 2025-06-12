@@ -25,13 +25,20 @@ import matplotlib
 matplotlib.use('Agg')  # Set the backend to non-interactive
 import matplotlib.pyplot as plt
 import contextily as ctx
+from fetch_census_addresses import process_and_save_addresses
 
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
 
 app = Flask(__name__)
 
@@ -42,6 +49,20 @@ WEB_TEMP_DIR = os.path.join(WEB_DATA_DIR, 'temp')
 
 for directory in [WEB_DATA_DIR, WEB_OUTPUT_DIR, WEB_TEMP_DIR]:
     os.makedirs(directory, exist_ok=True)
+
+# State names mapping
+STATES = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+    'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+    'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+    'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+    'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+    'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+    'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+    'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
+}
 
 def cleanup_old_files():
     """Clean up files older than 1 hour in the temp directory"""
@@ -156,7 +177,7 @@ def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', states=STATES)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -380,6 +401,41 @@ def get_results(filename):
     except Exception as e:
         logger.error(f"Error serving results file: {str(e)}")
         return jsonify({'error': 'Failed to serve results file'}), 500
+
+@app.route('/select_state', methods=['POST'])
+def select_state():
+    try:
+        state_abbr = request.form.get('state')
+        logging.info(f"Received state selection: {state_abbr}")
+        
+        if not state_abbr:
+            logging.error("No state provided in request")
+            return jsonify({'error': 'No state selected'}), 400
+            
+        if state_abbr not in STATES:
+            logging.error(f"Invalid state abbreviation: {state_abbr}")
+            return jsonify({'error': f'Invalid state selection: {state_abbr}'}), 400
+
+        logging.info(f"Processing addresses for state: {state_abbr}")
+        # Process addresses for the selected state
+        output_path = process_and_save_addresses(state_abbr)
+
+        if output_path:
+            logging.info(f"Successfully processed addresses for {state_abbr}")
+            return jsonify({
+                'success': True,
+                'message': f'Successfully processed addresses for {STATES[state_abbr]}',
+                'file_path': output_path
+            })
+        else:
+            logging.error(f"Failed to process addresses for {state_abbr}")
+            return jsonify({
+                'error': f'Failed to process addresses for {STATES[state_abbr]}'
+            }), 500
+
+    except Exception as e:
+        logging.error(f"Error in select_state: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 
