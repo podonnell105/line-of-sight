@@ -20,6 +20,10 @@ def get_opentopography_lidar(bbox):
     
     # Your API key
     api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
+    if not api_key:
+        print("WARNING: OPENTOPOGRAPHY_API_KEY environment variable is not set")
+        return None
+    print(f"Using API key: {api_key[:4]}...{api_key[-4:]}")  # Only show first/last 4 chars for security
     
     # Convert bbox to the format expected by the API
     params = {

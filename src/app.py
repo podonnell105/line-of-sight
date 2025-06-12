@@ -38,6 +38,13 @@ from rasterio.merge import merge as raster_merge
 # Load environment variables from .env file
 load_dotenv()
 
+# Log environment variable status
+api_key = os.getenv('OPENTOPOGRAPHY_API_KEY')
+if api_key:
+    logging.info(f"OpenTopography API key loaded: {api_key[:4]}...{api_key[-4:]}")
+else:
+    logging.error("OpenTopography API key not found in environment variables")
+
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
