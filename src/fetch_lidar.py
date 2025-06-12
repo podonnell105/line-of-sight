@@ -65,7 +65,7 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
     """
     Process downloaded elevation data and analyze vegetation in a single pass
     Using memory-efficient processing with small tiles and float32
-    Returns paths to saved intermediate files
+    Returns paths to saved intermediate files, data arrays, and statistics
     """
     try:
         # Create output directory if it doesn't exist
@@ -198,24 +198,36 @@ def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
                     
                     print(f"Processed tile row {i+1}/{n_tiles_h}")
             
-            # Clean up the temporary file
-            os.unlink(tif_file)
-            
-            # Return paths to all saved files
-            return {
+            # Load processed data
+            elevation, slope, variance, tree_mask, shrub_mask, building_mask = load_processed_data({
                 'elevation': elevation_file,
                 'slope': slope_file,
                 'variance': variance_file,
                 'tree_mask': tree_mask_file,
                 'shrub_mask': shrub_mask_file,
                 'building_mask': building_mask_file
+            })
+            
+            # Calculate statistics
+            stats = {
+                'max_elevation': np.max(elevation),
+                'min_elevation': np.min(elevation),
+                'mean_elevation': np.mean(elevation),
+                'max_slope': np.max(slope),
+                'mean_slope': np.mean(slope)
             }
+            
+            # Clean up the temporary file
+            os.unlink(tif_file)
+            
+            # Return paths to all saved files, data arrays, and statistics
+            return elevation_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats
             
     except Exception as e:
         print(f"Error processing and analyzing elevation data: {e}")
         if os.path.exists(tif_file):
             os.unlink(tif_file)
-        return None
+        return None, None, None, None, None, None, None, None
 
 def load_processed_data(file_paths):
     """
