@@ -573,8 +573,8 @@ def select_state():
             return jsonify({'error': f'Invalid state selection: {state_abbr}'}), 400
 
         logging.info(f"Processing addresses for state: {state_abbr}")
-        # Set max_buffers to 50
-        output_path = process_and_save_addresses(state_abbr, max_buffers=20)
+        # Remove max_buffers parameter to allow unlimited buffers
+        output_path = process_and_save_addresses(state_abbr)
 
         if output_path:
             logging.info(f"Successfully processed addresses for {state_abbr}")
