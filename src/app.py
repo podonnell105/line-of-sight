@@ -584,7 +584,7 @@ def select_state():
             state_abbr=state_abbr,
             output_dir='web_data',
             buffer_m=100,  # 100m buffer around rail lines
-            max_buffers=50,
+            max_buffers=None,
             chunk_size=1000
         )
 
