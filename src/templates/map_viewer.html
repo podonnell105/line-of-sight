@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LOS Points Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .file-input {
+            margin: 20px 0;
+        }
+        .legend {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.8);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LOS Points Map Viewer</h1>
+        <div class="file-input">
+            <input type="file" id="csvFile" accept=".csv" />
+        </div>
+        <div id="status"></div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([39.8283, -98.5795], 4); // Center of US
+
+        // Add the OpenStreetMap tiles with a different tile provider
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Create a layer group for the markers
+        const markers = L.layerGroup().addTo(map);
+
+        // Create a legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'legend');
+            div.innerHTML = `
+                <h4>LOS Score</h4>
+                <div><i style="background: #00ff00"></i>Clear (1)</div>
+                <div><i style="background: #ff0000"></i>Blocked (0)</div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
+        // Create an info control
+        const info = L.control();
+        info.onAdd = function(map) {
+            this._div = L.DomUtil.create('div', 'info');
+            this.update();
+            return this._div;
+        };
+        info.update = function(props) {
+            this._div.innerHTML = '<h4>Point Information</h4>' + 
+                (props ? 
+                    `<b>${props.address}</b><br />
+                    LOS Score: ${props.los_score}<br />
+                    State: ${props.state}`
+                    : 'Hover over a point');
+        };
+        info.addTo(map);
+
+        function updateStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'error' : 'success';
+        }
+
+        // Handle file upload
+        document.getElementById('csvFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) {
+                updateStatus('No file selected', true);
+                return;
+            }
+
+            console.log('File selected:', file.name);
+            updateStatus('Reading file...');
+
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                console.log('File read complete');
+                const csvData = event.target.result;
+                console.log('CSV data:', csvData.substring(0, 200) + '...'); // Log first 200 chars
+
+                const lines = csvData.split('\n');
+                console.log('Number of lines:', lines.length);
+                
+                // Clear existing markers
+                markers.clearLayers();
+
+                let validPoints = 0;
+                let invalidPoints = 0;
+
+                // Skip header row and process each line
+                for(let i = 1; i < lines.length; i++) {
+                    if(!lines[i].trim()) {
+                        console.log('Skipping empty line:', i);
+                        continue;
+                    }
+                    
+                    try {
+                        // Split by comma but respect quoted fields
+                        const matches = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                        if (!matches || matches.length < 4) {
+                            console.log('Invalid line format:', lines[i]);
+                            invalidPoints++;
+                            continue;
+                        }
+
+                        const address = matches[0].replace(/^"|"$/g, '');
+                        const coordinates = matches[1].replace(/^"|"$/g, '');
+                        const state = matches[2].replace(/^"|"$/g, '');
+                        const los_score = matches[3].replace(/^"|"$/g, '');
+                        
+                        console.log('Processing line:', i, {address, coordinates, state, los_score});
+                        
+                        const [lat, lng] = coordinates.split(',').map(coord => parseFloat(coord.trim()));
+                        
+                        if(isNaN(lat) || isNaN(lng)) {
+                            console.log('Invalid coordinates:', coordinates);
+                            invalidPoints++;
+                            continue;
+                        }
+
+                        // Create marker with appropriate color based on LOS score
+                        const color = los_score === '1' ? '#00ff00' : '#ff0000';
+                        const marker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: color,
+                            color: '#000',
+                            weight: 1,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        });
+
+                        // Add popup with information
+                        marker.bindPopup(`
+                            <b>Address:</b> ${address}<br>
+                            <b>LOS Score:</b> ${los_score}<br>
+                            <b>State:</b> ${state}
+                        `);
+
+                        // Add hover effect
+                        marker.on('mouseover', function(e) {
+                            this.openPopup();
+                            info.update({
+                                address: address,
+                                los_score: los_score,
+                                state: state
+                            });
+                        });
+                        marker.on('mouseout', function(e) {
+                            this.closePopup();
+                            info.update();
+                        });
+
+                        markers.addLayer(marker);
+                        validPoints++;
+                    } catch (error) {
+                        console.error('Error processing line:', i, error);
+                        invalidPoints++;
+                    }
+                }
+
+                // Fit map to show all markers
+                if(markers.getLayers().length > 0) {
+                    map.fitBounds(markers.getBounds());
+                    updateStatus(`Successfully loaded ${validPoints} points. ${invalidPoints} invalid points skipped.`);
+                } else {
+                    updateStatus('No valid points found in the file.', true);
+                }
+            };
+
+            reader.onerror = function(error) {
+                console.error('Error reading file:', error);
+                updateStatus('Error reading file: ' + error, true);
+            };
+
+            try {
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('Error starting file read:', error);
+                updateStatus('Error reading file: ' + error.message, true);
+            }
+        });
+    </script>
+</body>
+</html> 

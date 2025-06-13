@@ -345,16 +345,7 @@ def analyze():
         with open(clear_output_file, 'w') as f:
             f.write('address,coordinates,state,los_score\n')
 
-        # 1. Fetch rail lines for the state
-        logging.info("Fetching rail lines...")
-        rail_gdf = fetch_rail_lines_in_bbox({
-            'xmin': -91.5130518,  # Illinois bounds
-            'ymin': 36.9701313,
-            'xmax': -87.0199244,
-            'ymax': 42.5083736
-        })
-        if rail_gdf is None or rail_gdf.empty:
-            return jsonify({'error': 'No rail lines found in the area'}), 400
+        
 
         # 2. Load all addresses for the state
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
@@ -685,6 +676,10 @@ def fetch_buildings_osm(minx, miny, maxx, maxy, output_fn):
         print(f"Saved building footprints to {output_fn}")
     gdf = ensure_valid_geodf(gdf)
     return gdf
+
+@app.route('/map_viewer')
+def map_viewer():
+    return render_template('map_viewer.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True) 
