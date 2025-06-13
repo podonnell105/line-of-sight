@@ -337,13 +337,13 @@ def analyze():
         # Create output CSV file with headers
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         output_file = os.path.join(WEB_OUTPUT_DIR, f'address_los_scores_{timestamp}.csv')
-        clear_output_file = os.path.join(WEB_OUTPUT_DIR, f'clear_los_addresses_{timestamp}.csv')
+        clear_output_file = os.path.join(WEB_OUTPUT_DIR, f'clear_los_addresses_{STATES[state]}_{timestamp}.csv')
         
         # Write headers to CSV
         with open(output_file, 'w') as f:
-            f.write('address,coordinates,state\n')
+            f.write('address,coordinates,state,los_score\n')
         with open(clear_output_file, 'w') as f:
-            f.write('address,coordinates,state\n')
+            f.write('address,coordinates,state,los_score\n')
 
         # 1. Fetch rail lines for the state
         logging.info("Fetching rail lines...")
@@ -370,6 +370,12 @@ def analyze():
         # Convert to metric CRS for accurate distance calculations
         rail_gdf = rail_gdf.to_crs(epsg=3857)
         gdf = gdf.to_crs(epsg=3857)
+        
+       
+
+        if gdf.empty:
+            logging.error("No addresses within 100m of rail lines. Aborting analysis.")
+            return jsonify({'error': 'No addresses within 100m of rail lines.'}), 400
         
         # Cluster addresses and create non-overlapping bounding boxes
         merged_boxes = cluster_addresses_and_create_bboxes(gdf)
@@ -468,14 +474,14 @@ def analyze():
                             # Format coordinates as a single string
                             coords = f"{addr_wgs84.y:.6f}, {addr_wgs84.x:.6f}"
                             
-                            # Write to CSV with proper escaping
+                            # Write to CSV with proper escaping and los_score
                             with open(output_file, 'a') as f:
-                                f.write(f'"{formatted_addr}","{coords}","{state}"\n')
+                                f.write(f'"{formatted_addr}","{coords}","{state}",{score}\n')
                             
                             # Write to clear LOS file if score is 1
                             if score == 1:
                                 with open(clear_output_file, 'a') as f:
-                                    f.write(f'"{formatted_addr}","{coords}","{state}"\n')
+                                    f.write(f'"{formatted_addr}","{coords}","{state}",{score}\n')
                             
                             # Update statistics
                             total_addresses += 1
@@ -573,8 +579,14 @@ def select_state():
             return jsonify({'error': f'Invalid state selection: {state_abbr}'}), 400
 
         logging.info(f"Processing addresses for state: {state_abbr}")
-        # Remove max_buffers parameter to allow unlimited buffers
-        output_path = process_and_save_addresses(state_abbr)
+        # Process addresses for the selected state with 100m buffer
+        output_path = process_and_save_addresses(
+            state_abbr=state_abbr,
+            output_dir='web_data',
+            buffer_m=100,  # 100m buffer around rail lines
+            max_buffers=50,
+            chunk_size=1000
+        )
 
         if output_path:
             logging.info(f"Successfully processed addresses for {state_abbr}")
