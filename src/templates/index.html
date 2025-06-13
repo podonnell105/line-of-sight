@@ -115,36 +115,10 @@
         document.getElementById('stateSelect').addEventListener('change', function() {
             const state = this.value;
             if (state) {
-                // Disable the analyze button while loading
+                // Enable the analyze button when state is selected
+                document.getElementById('analyzeBtn').disabled = false;
+            } else {
                 document.getElementById('analyzeBtn').disabled = true;
-                
-                // Create form data
-                const formData = new FormData();
-                formData.append('state', state);
-                
-                // Fetch addresses for selected state
-                fetch('/select_state', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Enable the analyze button
-                        document.getElementById('analyzeBtn').disabled = false;
-                        // Show success message
-                        document.getElementById('success').textContent = data.message;
-                        document.getElementById('success').style.display = 'block';
-                    } else {
-                        document.getElementById('error').textContent = data.error;
-                        document.getElementById('error').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('error').textContent = 'Error loading addresses';
-                    document.getElementById('error').style.display = 'block';
-                });
             }
         });
 
@@ -162,18 +136,33 @@
             document.getElementById('success').style.display = 'none';
             document.getElementById('results').style.display = 'none';
 
-            const data = {
-                state: state,
-                shrub_height_threshold: 0.5  // Fixed value
-            };
-
             try {
+                // First, fetch addresses for the selected state
+                const formData = new FormData();
+                formData.append('state', state);
+                
+                const addressResponse = await fetch('/select_state', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const addressData = await addressResponse.json();
+                if (!addressData.success) {
+                    throw new Error(addressData.error || 'Failed to fetch addresses');
+                }
+
+                // Then run the analysis
+                const analysisData = {
+                    state: state,
+                    shrub_height_threshold: 0.5  // Fixed value
+                };
+
                 const response = await fetch('/analyze', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(analysisData)
                 });
                 const result = await response.json();
 
