@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from shapely.geometry import Point, box
+from shapely.geometry import Point, box, LineString
 import requests
 from io import BytesIO
 import urllib.parse
@@ -116,3 +116,26 @@ def combine_and_deduplicate(gdfs):
     print(f"Total unique rail segments: {len(combined)}")
     
     return combined
+
+def calculate_los_score_buildings(address_point, rail_point, buildings_gdf):
+    """
+    Calculate line-of-sight score between an address and rail point using only building footprints.
+    Returns 1 if line of sight is clear, 0 if blocked by buildings.
+    """
+    try:
+        # Create a line between address and rail point
+        sightline = LineString([address_point, rail_point])
+        
+        # Check if sightline crosses any building
+        for _, bldg in buildings_gdf.iterrows():
+            # If the address is inside this building, skip it
+            if bldg.geometry.contains(Point(address_point)):
+                continue
+            if bldg.geometry.crosses(sightline) or bldg.geometry.intersects(sightline):
+                return 0  # Blocked by building
+        
+        return 1  # Clear line of sight
+        
+    except Exception as e:
+        print(f"Error calculating LOS score: {e}")
+        return 0
