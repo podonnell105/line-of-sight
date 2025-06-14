@@ -574,7 +574,7 @@ def select_state():
         output_path = process_and_save_addresses(
             state_abbr=state_abbr,
             output_dir='web_data',
-            buffer_m=100,  # 100m buffer around rail lines
+            buffer_m=200,  # 100m buffer around rail lines
             max_buffers=None,
             chunk_size=1000
         )
