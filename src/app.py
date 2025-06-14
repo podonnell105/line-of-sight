@@ -246,7 +246,7 @@ def process_state(state_abbr):
         rail_gdf = rail_gdf.to_crs(epsg=3857)
         buffer_dist = 200
         rail_buffer = rail_gdf.buffer(buffer_dist)
-        corridor_union = rail_buffer.unary_union
+        corridor_union = rail_buffer.union_all()
 
         # Tile the buffered corridor with 1km x 1km boxes
         tiles = tile_buffered_corridor(corridor_union, tile_size=1000)
