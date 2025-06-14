@@ -345,7 +345,34 @@ def analyze():
         with open(clear_output_file, 'w') as f:
             f.write('address,coordinates,state,los_score\n')
 
-        
+        # Get state bounds using Nominatim
+        url = f"https://nominatim.openstreetmap.org/search"
+        params = {
+            'q': f"{state}, USA",
+            'format': 'json',
+            'limit': 1
+        }
+        headers = {'User-Agent': 'LineOfSightAnalysis/1.0'}
+        response = requests.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        if not data:
+            logging.error(f"Could not get bounds for state {state}")
+            return jsonify({'error': f'Could not get bounds for state {state}'}), 400
+        bounds = data[0]['boundingbox']
+        state_bbox = {
+            'xmin': float(bounds[2]),
+            'ymin': float(bounds[0]),
+            'xmax': float(bounds[3]),
+            'ymax': float(bounds[1])
+        }
+
+        # Fetch rail lines for the state
+        logging.info("Fetching rail lines...")
+        rail_gdf = fetch_rail_lines_in_bbox(state_bbox)
+        if rail_gdf is None or rail_gdf.empty:
+            logging.error(f"No rail lines found in {state}")
+            return jsonify({'error': f'No rail lines found in {state}'}), 400
 
         # 2. Load all addresses for the state
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
