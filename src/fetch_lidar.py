@@ -18,101 +18,6 @@ from rasterio.transform import from_origin
 # Load environment variables
 load_dotenv(override=True)
 
-def get_usgs_3dep_lidar(bbox):
-    """
-    Query USGS 3DEP API for high-resolution LiDAR data in the given bounding box
-    """
-    # USGS 3DEP API endpoint - using the 1 meter DEM endpoint
-    base_url = "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/1meter/ImageServer/exportImage"
-    
-    # Convert bbox to the format expected by the API
-    params = {
-        'bbox': f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}",
-        'bboxSR': '4326',  # WGS84
-        'size': '1024,1024',  # Reduced size to avoid timeouts
-        'format': 'tiff',
-        'pixelType': 'F32',
-        'noDataInterpretation': 'esriNoDataMatchAny',
-        'interpolation': '+RSP_BilinearInterpolation',
-        'f': 'image'
-    }
-    
-    print("Querying USGS 3DEP API for LiDAR data...")
-    max_retries = 3
-    retry_delay = 5  # seconds
-    
-    for attempt in range(max_retries):
-        try:
-            # Add delay between requests to respect rate limits
-            time.sleep(retry_delay)
-            
-            # Get the data
-            response = requests.get(base_url, params=params, timeout=30)
-            response.raise_for_status()
-            
-            # Save to temporary file
-            with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as tmp:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        tmp.write(chunk)
-                tmp_path = tmp.name
-                
-            print(f"Downloaded data to {tmp_path}")
-            return tmp_path
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Error: API request failed (attempt {attempt + 1}/{max_retries}): {e}")
-            if hasattr(e.response, 'text'):
-                print("Response text:", e.response.text)
-            if attempt < max_retries - 1:
-                print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                print("Max retries reached. Trying alternative endpoint...")
-                return get_usgs_3dep_lidar_alternative(bbox)
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            if attempt < max_retries - 1:
-                print(f"Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-            else:
-                return None
-
-def get_usgs_3dep_lidar_alternative(bbox):
-    """
-    Alternative USGS 3DEP API endpoint using the 10 meter DEM
-    """
-    base_url = "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/10meter/ImageServer/exportImage"
-    
-    params = {
-        'bbox': f"{bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}",
-        'bboxSR': '4326',
-        'size': '512,512',  # Further reduced size
-        'format': 'tiff',
-        'pixelType': 'F32',
-        'noDataInterpretation': 'esriNoDataMatchAny',
-        'interpolation': '+RSP_BilinearInterpolation',
-        'f': 'image'
-    }
-    
-    print("Trying alternative USGS 3DEP API endpoint...")
-    try:
-        response = requests.get(base_url, params=params, timeout=30)
-        response.raise_for_status()
-        
-        with tempfile.NamedTemporaryFile(suffix='.tif', delete=False) as tmp:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    tmp.write(chunk)
-            tmp_path = tmp.name
-            
-        print(f"Downloaded data from alternative endpoint to {tmp_path}")
-        return tmp_path
-        
-    except Exception as e:
-        print(f"Error with alternative endpoint: {e}")
-        return None
-
 def get_google_elevation(bbox):
     """
     Query Google Elevation API for high-resolution elevation data
@@ -194,7 +99,7 @@ def get_google_elevation(bbox):
 
 def get_lidar_data(bbox):
     """
-    Get LiDAR data for a bounding box using Google Elevation API.
+    Get elevation data for a bounding box using Google Elevation API.
     
     Args:
         bbox (tuple): Bounding box coordinates (xmin, ymin, xmax, ymax)
