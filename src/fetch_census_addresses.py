@@ -84,7 +84,7 @@ def fetch_addresses_from_osm(bbox, state_abbr):
         logging.error(f"Error fetching addresses from OSM: {str(e)}")
         return []
 
-def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=100, max_buffers = None, chunk_size=1000):
+def process_and_save_addresses(state_abbr, output_dir='web_data', buffer_m=100, max_buffers = 50, chunk_size=1000):
     """
     Fetch Class 1 rail lines, buffer by specified distance, fetch addresses only near rails,
     process in chunks, and save to file.

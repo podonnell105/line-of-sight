@@ -352,6 +352,22 @@ def analyze():
         gdf = gpd.read_file(addr_path)
         logging.info(f"Total addresses loaded from file: {len(gdf)}")
 
+        # 3. Fetch rail data for the state
+        # Get bounding box of all addresses
+        if gdf.crs is None:
+            gdf.set_crs(epsg=4326, inplace=True)
+        
+        min_lon, min_lat, max_lon, max_lat = gdf.total_bounds
+        state_bbox = {'xmin': min_lon, 'ymin': min_lat, 'xmax': max_lon, 'ymax': max_lat}
+        
+        # Fetch rail lines in the bounding box
+        rail_gdf = fetch_rail_lines_in_bbox(state_bbox)
+        if rail_gdf is None or rail_gdf.empty:
+            logging.error("No rail lines found in the area. Aborting analysis.")
+            return jsonify({'error': 'No rail lines found in the area.'}), 400
+        
+        logging.info(f"Fetched {len(rail_gdf)} rail line segments.")
+
         # Ensure CRS is set for all geometries
         if rail_gdf.crs is None:
             rail_gdf.set_crs(epsg=4326, inplace=True)
@@ -575,7 +591,7 @@ def select_state():
             state_abbr=state_abbr,
             output_dir='web_data',
             buffer_m=100,  # 100m buffer around rail lines
-            max_buffers=None,
+            max_buffers=50,
             chunk_size=1000
         )
 
