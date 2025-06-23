@@ -324,7 +324,9 @@ def analyze():
         cleanup_old_files()
         
         # Get state from request
-        state = request.json.get('state', 'IL')
+        state = request.json.get('state')
+        if not state:
+            return jsonify({'error': 'No state specified'}), 400
         logging.info(f"Starting analysis for state: {state}")
 
         # Create fresh directories
@@ -345,7 +347,7 @@ def analyze():
         with open(clear_output_file, 'w') as f:
             f.write('address,coordinates,state,los_score\n')
 
-        # Load all addresses for the state
+         # Load all addresses for the state
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
         gdf = gpd.read_file(addr_path)
         logging.info(f"Total addresses loaded from file: {len(gdf)}")
