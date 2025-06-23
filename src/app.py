@@ -345,82 +345,84 @@ def analyze():
         with open(clear_output_file, 'w') as f:
             f.write('address,coordinates,state,los_score\n')
 
-        
-
-        # 2. Load all addresses for the state
+        # Load all addresses for the state
         addr_path = os.path.join(WEB_DATA_DIR, 'uploaded_addresses.geojson')
         gdf = gpd.read_file(addr_path)
         logging.info(f"Total addresses loaded from file: {len(gdf)}")
 
-        # 3. Fetch rail data for the state
-        # Get bounding box of all addresses
+        # Ensure CRS is set for addresses
         if gdf.crs is None:
             gdf.set_crs(epsg=4326, inplace=True)
         
-        min_lon, min_lat, max_lon, max_lat = gdf.total_bounds
-        state_bbox = {'xmin': min_lon, 'ymin': min_lat, 'xmax': max_lon, 'ymax': max_lat}
-        
-        # Fetch rail lines in the bounding box
-        rail_gdf = fetch_rail_lines_in_bbox(state_bbox)
-        if rail_gdf is None or rail_gdf.empty:
-            logging.error("No rail lines found in the area. Aborting analysis.")
-            return jsonify({'error': 'No rail lines found in the area.'}), 400
-        
-        logging.info(f"Fetched {len(rail_gdf)} rail line segments.")
-
-        # Ensure CRS is set for all geometries
-        if rail_gdf.crs is None:
-            rail_gdf.set_crs(epsg=4326, inplace=True)
-        if gdf.crs is None:
-            gdf.set_crs(epsg=4326, inplace=True)
-
         # Convert to metric CRS for accurate distance calculations
-        rail_gdf = rail_gdf.to_crs(epsg=3857)
         gdf = gdf.to_crs(epsg=3857)
-        
-       
 
         if gdf.empty:
-            logging.error("No addresses within 100m of rail lines. Aborting analysis.")
-            return jsonify({'error': 'No addresses within 100m of rail lines.'}), 400
+            logging.error("No addresses found. Aborting analysis.")
+            return jsonify({'error': 'No addresses found.'}), 400
         
-        # Cluster addresses and create non-overlapping bounding boxes
-        merged_boxes = cluster_addresses_and_create_bboxes(gdf)
-        logging.info(f"Created {len(merged_boxes)} non-overlapping bounding boxes for LiDAR requests.")
+        # Create bounding boxes for processing (smaller boxes to reduce memory usage)
+        merged_boxes = cluster_addresses_and_create_bboxes(gdf, eps_m=1000, min_samples=1, buffer_m=500)
+        logging.info(f"Created {len(merged_boxes)} bounding boxes for processing.")
 
         # Initialize statistics
         total_addresses = 0
         clear_los = 0
         blocked_los = 0
 
-        # Process each box
+        # Process each box individually
         for i, box_coords in enumerate(merged_boxes):
             minx, miny, maxx, maxy = box_coords
             logging.info(f"Processing box {i+1}/{len(merged_boxes)}: {box_coords}")
             
-            # Convert box coordinates back to WGS84 for API calls
-            box_wgs84 = gpd.GeoDataFrame(
-                geometry=[box(minx, miny, maxx, maxy)],
-                crs='EPSG:3857'
-            ).to_crs('EPSG:4326')
-            min_lon, min_lat, max_lon, max_lat = box_wgs84.total_bounds
-            
-            # Get LiDAR data
-            bbox = [min_lon, min_lat, max_lon, max_lat]
-            tif_file = get_lidar_data(bbox)
-            if not tif_file:
-                logging.error(f"Failed to get LiDAR data for box {i+1}")
-                continue
-                
-            # Process LiDAR data
-            processed_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = process_and_analyze_lidar_data(tif_file)
-            if not processed_file:
-                logging.error(f"Failed to process LiDAR data for box {i+1}")
-                continue
-                
-            # Get buildings in this area
-            buildings_path = os.path.join(WEB_TEMP_DIR, f'buildings_{i}.geojson')
             try:
+                # Get addresses in this box only
+                box_geom = box(minx, miny, maxx, maxy)
+                box_addr_gdf = gdf[gdf.geometry.within(box_geom)].copy()
+                
+                if box_addr_gdf.empty:
+                    logging.info(f"No addresses in box {i+1}")
+                    continue
+                
+                logging.info(f"Processing {len(box_addr_gdf)} addresses in box {i+1}")
+                
+                # Convert box coordinates back to WGS84 for API calls
+                box_wgs84 = gpd.GeoDataFrame(
+                    geometry=[box(minx, miny, maxx, maxy)],
+                    crs='EPSG:3857'
+                ).to_crs('EPSG:4326')
+                min_lon, min_lat, max_lon, max_lat = box_wgs84.total_bounds
+                
+                # Fetch rail data ONLY for this bounding box
+                box_bbox = {'xmin': min_lon, 'ymin': min_lat, 'xmax': max_lon, 'ymax': max_lat}
+                rail_gdf = fetch_rail_lines_in_bbox(box_bbox)
+                
+                if rail_gdf is None or rail_gdf.empty:
+                    logging.info(f"No rail lines found in box {i+1}, skipping")
+                    continue
+                
+                logging.info(f"Fetched {len(rail_gdf)} rail line segments for box {i+1}")
+                
+                # Ensure rail data has correct CRS and convert to metric
+                if rail_gdf.crs is None:
+                    rail_gdf.set_crs(epsg=4326, inplace=True)
+                rail_gdf = rail_gdf.to_crs(epsg=3857)
+                
+                # Get LiDAR data for this box
+                bbox = [min_lon, min_lat, max_lon, max_lat]
+                tif_file = get_lidar_data(bbox)
+                if not tif_file:
+                    logging.error(f"Failed to get LiDAR data for box {i+1}")
+                    continue
+                    
+                # Process LiDAR data
+                processed_file, elevation, slope, variance, tree_mask, shrub_mask, building_mask, stats = process_and_analyze_lidar_data(tif_file)
+                if not processed_file:
+                    logging.error(f"Failed to process LiDAR data for box {i+1}")
+                    continue
+                    
+                # Get buildings in this area
+                buildings_path = os.path.join(WEB_TEMP_DIR, f'buildings_{i}.geojson')
                 buildings_gdf = fetch_buildings_osm(min_lon, min_lat, max_lon, max_lat, buildings_path)
                 
                 # Ensure buildings have correct CRS
@@ -428,16 +430,8 @@ def analyze():
                     buildings_gdf.set_crs(epsg=4326, inplace=True)
                 buildings_gdf = buildings_gdf.to_crs(epsg=3857)
                 
-                # Get addresses in this box
-                box_geom = box(minx, miny, maxx, maxy)
-                box_addr_gdf = gdf[gdf.geometry.within(box_geom)].copy()
-                
-                if box_addr_gdf.empty:
-                    logging.info(f"No addresses in box {i+1}")
-                    continue
-                    
-                # Process addresses in chunks
-                chunk_size = 50  # Process 50 addresses at a time
+                # Process addresses in this box in smaller chunks
+                chunk_size = 25  # Reduced chunk size for better memory management
                 for chunk_start in range(0, len(box_addr_gdf), chunk_size):
                     chunk_end = min(chunk_start + chunk_size, len(box_addr_gdf))
                     chunk = box_addr_gdf.iloc[chunk_start:chunk_end]
@@ -445,7 +439,7 @@ def analyze():
                     # Process each address in the chunk
                     for idx, addr in chunk.iterrows():
                         try:
-                            # Find nearest rail point
+                            # Find nearest rail point using rail data for this box only
                             nearest_rail_pt = nearest_points(addr.geometry, rail_gdf.union_all())[1]
                             
                             # Convert points to WGS84 for elevation analysis
@@ -505,7 +499,7 @@ def analyze():
                     del chunk
                     gc.collect()  # Force garbage collection
                 
-                # Clean up temporary files
+                # Clean up temporary files for this box
                 for file_path in [tif_file, processed_file, buildings_path]:
                     if os.path.exists(file_path):
                         try:
@@ -513,10 +507,13 @@ def analyze():
                         except Exception as e:
                             logging.warning(f"Failed to remove temporary file {file_path}: {str(e)}")
                 
-                # Clear memory
+                # Clear memory for this box
+                del rail_gdf
                 del buildings_gdf
                 del box_addr_gdf
                 gc.collect()  # Force garbage collection
+                
+                logging.info(f"Completed box {i+1}/{len(merged_boxes)}. Processed {total_addresses} addresses so far.")
                 
             except Exception as e:
                 logging.error(f"Error processing box {i+1}: {str(e)}")
@@ -591,7 +588,7 @@ def select_state():
             state_abbr=state_abbr,
             output_dir='web_data',
             buffer_m=100,  # 100m buffer around rail lines
-            max_buffers=50,
+            max_buffers=None,
             chunk_size=1000
         )
 
