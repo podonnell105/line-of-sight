@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from fetch_lidar import get_lidar_data, process_and_analyze_lidar_data
 from process_rail import fetch_rail_lines_in_bbox
 import sys

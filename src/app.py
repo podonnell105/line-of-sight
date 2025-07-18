@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 import os
 from dotenv import load_dotenv
 import geopandas as gpd
-from .address_los_score_lidar import (
+from address_los_score_lidar import (
     bbox_from_point_radius,
     fetch_rail_lines_in_bbox,
     fetch_buildings_osm,
@@ -26,8 +26,8 @@ import matplotlib
 matplotlib.use('Agg')  # Set the backend to non-interactive
 import matplotlib.pyplot as plt
 import contextily as ctx
-from .fetch_census_addresses import process_and_save_addresses
-from .city_los_processor import process_city_los_analysis
+from fetch_census_addresses import process_and_save_addresses
+from city_los_processor import process_city_los_analysis
 import requests
 import math
 import time
