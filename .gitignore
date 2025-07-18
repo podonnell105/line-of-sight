@@ -4,7 +4,6 @@
 data/*
 web_data/*
 output/*
-
 .env
 src/__pycache__/*
 

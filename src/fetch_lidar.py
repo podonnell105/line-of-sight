@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 import time
 import json
 from rasterio.transform import from_origin
+from elevation_providers import GoogleElevationProvider
 
 # Load environment variables
 load_dotenv(override=True)
@@ -97,17 +98,18 @@ def get_google_elevation(bbox):
         print(f"Error getting elevation data: {e}")
         return None
 
-def get_lidar_data(bbox):
+def get_lidar_data(bbox, provider=None):
     """
-    Get elevation data for a bounding box using Google Elevation API.
-    
+    Get elevation data for a bounding box using the specified provider.
     Args:
         bbox (tuple): Bounding box coordinates (xmin, ymin, xmax, ymax)
-        
+        provider (ElevationProvider): Optional. If None, use GoogleElevationProvider.
     Returns:
         str: Path to the saved GeoTIFF file
     """
-    return get_google_elevation(bbox)
+    if provider is None:
+        provider = GoogleElevationProvider()
+    return provider.get_elevation_tif(bbox)
 
 def process_and_analyze_lidar_data(tif_file, output_dir='data', tile_size=250):
     """

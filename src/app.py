@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, send_file
 import os
 from dotenv import load_dotenv
 import geopandas as gpd
-from address_los_score_lidar import (
+from .address_los_score_lidar import (
     bbox_from_point_radius,
     fetch_rail_lines_in_bbox,
     fetch_buildings_osm,
@@ -26,7 +26,8 @@ import matplotlib
 matplotlib.use('Agg')  # Set the backend to non-interactive
 import matplotlib.pyplot as plt
 import contextily as ctx
-from fetch_census_addresses import process_and_save_addresses
+from .fetch_census_addresses import process_and_save_addresses
+from .city_los_processor import process_city_los_analysis
 import requests
 import math
 import time
@@ -95,19 +96,33 @@ STATES = {
 }
 
 def cleanup_old_files():
-    """Clean up files older than 1 hour in the temp and output directories"""
+    """Clean up files older than 1 hour in the temp directory only, preserve output files"""
     current_time = datetime.now()
-    for directory in [WEB_TEMP_DIR, WEB_OUTPUT_DIR]:
-        if not os.path.exists(directory):
-            continue
-        for filename in os.listdir(directory):
-            filepath = os.path.join(directory, filename)
+    
+    # Only clean up temp directory, preserve output files
+    if os.path.exists(WEB_TEMP_DIR):
+        for filename in os.listdir(WEB_TEMP_DIR):
+            filepath = os.path.join(WEB_TEMP_DIR, filename)
             if os.path.getmtime(filepath) < (current_time.timestamp() - 3600):
                 try:
                     os.remove(filepath)
-                    logging.info(f"Cleaned up old file: {filepath}")
+                    logging.info(f"Cleaned up old temp file: {filepath}")
                 except Exception as e:
-                    logging.warning(f"Failed to remove old file {filepath}: {e}")
+                    logging.warning(f"Failed to remove old temp file {filepath}: {e}")
+    
+    # For output directory, only clean up very old files (24 hours) and preserve city analysis results
+    if os.path.exists(WEB_OUTPUT_DIR):
+        for filename in os.listdir(WEB_OUTPUT_DIR):
+            filepath = os.path.join(WEB_OUTPUT_DIR, filename)
+            # Only remove files older than 24 hours, and not city analysis results
+            if (os.path.getmtime(filepath) < (current_time.timestamp() - 86400) and 
+                not filename.startswith('Kingstree_') and 
+                not filename.startswith('address_los_scores_')):
+                try:
+                    os.remove(filepath)
+                    logging.info(f"Cleaned up old output file: {filepath}")
+                except Exception as e:
+                    logging.warning(f"Failed to remove old output file {filepath}: {e}")
 
 def save_analysis_plot(close_addr_gdf, rail_gdf, buildings_gdf, min_lat, min_lon, max_lat, max_lon, output_path):
     """Save analysis plot with the full bounding box extent"""
@@ -609,6 +624,96 @@ def select_state():
 
     except Exception as e:
         logging.error(f"Error in select_state: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/analyze_city', methods=['POST'])
+def analyze_city():
+    try:
+        # Clean up old files before starting new analysis
+        cleanup_old_files()
+        
+        # Get city and state from request
+        data = request.json
+        city_name = data.get('city')
+        state_abbr = data.get('state')
+        
+        if not city_name or not state_abbr:
+            return jsonify({'error': 'Both city and state are required'}), 400
+            
+        if state_abbr not in STATES:
+            return jsonify({'error': f'Invalid state abbreviation: {state_abbr}'}), 400
+            
+        logging.info(f"Starting city analysis for {city_name}, {state_abbr}")
+
+        # Clean up only temp directory, preserve output files
+        if os.path.exists(WEB_TEMP_DIR):
+            shutil.rmtree(WEB_TEMP_DIR)
+        os.makedirs(WEB_TEMP_DIR, exist_ok=True)
+        logging.info(f"Cleaned temp directory, preserving output files")
+        
+        # Ensure output directory exists but don't delete existing files
+        os.makedirs(WEB_OUTPUT_DIR, exist_ok=True)
+        logging.info(f"Output directory ready, preserving previous results")
+
+        # Get elevation provider preference from request (default to OpenTopography)
+        elevation_provider_name = data.get('elevation_provider', 'opentopography')
+        
+        # Set up elevation provider
+        elevation_provider = None
+        if elevation_provider_name == 'opentopography':
+            from .elevation_providers import OpenTopographyProvider
+            elevation_provider = OpenTopographyProvider()
+            logging.info(f"Using OpenTopography for elevation data")
+        elif elevation_provider_name == 'google':
+            from .elevation_providers import GoogleElevationProvider
+            elevation_provider = GoogleElevationProvider()
+            logging.info(f"Using Google Elevation API for elevation data")
+        
+        # Process city LOS analysis
+        output_file = process_city_los_analysis(
+            city_name=city_name,
+            state_abbr=state_abbr,
+            output_dir=WEB_OUTPUT_DIR,
+            box_size_m=200,  # 200m bounding boxes for precision
+            overlap_m=50,     # 50m overlap
+            elevation_provider=elevation_provider
+        )
+        
+        if not output_file:
+            return jsonify({'error': 'Failed to process city analysis'}), 500
+            
+        # Get file statistics
+        if os.path.exists(output_file):
+            df = pd.read_csv(output_file)
+            total_addresses = len(df)
+            clear_los = len(df[df['los_score'] == 1])
+            blocked_los = len(df[df['los_score'] == 0])
+            clear_percentage = (clear_los / total_addresses) * 100 if total_addresses > 0 else 0
+            
+            statistics = {
+                'total_addresses': total_addresses,
+                'clear_los': clear_los,
+                'blocked_los': blocked_los,
+                'clear_percentage': clear_percentage
+            }
+        else:
+            statistics = {
+                'total_addresses': 0,
+                'clear_los': 0,
+                'blocked_los': 0,
+                'clear_percentage': 0
+            }
+        
+        return jsonify({
+            'success': True,
+            'message': f'City analysis complete for {city_name}, {state_abbr}',
+            'output_file': os.path.basename(output_file),
+            'download_url': f'/results/{os.path.basename(output_file)}',
+            'statistics': statistics
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in analyze_city: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 def fetch_buildings_osm(minx, miny, maxx, maxy, output_fn):

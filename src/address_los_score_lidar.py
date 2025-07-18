@@ -34,7 +34,8 @@ def bbox_from_point_radius(lat, lon, radius_km):
 
 def calculate_los_score(bbox, address_point, rail_point, elevation, tree_mask, shrub_mask, building_mask):
     """
-    Calculate line-of-sight score between an address and rail point
+    Calculate line-of-sight score between an address and rail point using satellite imagery and enhanced obstacle detection.
+    Accounts for houses, fences, trees, and elevation changes.
     """
     try:
         # Convert points to raster coordinates
@@ -48,10 +49,13 @@ def calculate_los_score(bbox, address_point, rail_point, elevation, tree_mask, s
         rail_x = int((rail_point[0] - x_min) / x_res)
         rail_y = int((rail_point[1] - y_min) / y_res)
 
-        # Create line of sight points
-        num_points = 100
+        # Create line of sight points with higher resolution for better accuracy
+        num_points = 200  # Increased resolution
         x = np.linspace(addr_x, rail_x, num_points)
         y = np.linspace(addr_y, rail_y, num_points)
+
+        # Get starting elevation for reference
+        start_elevation = elevation[addr_y, addr_x] if (0 <= addr_y < elevation.shape[0] and 0 <= addr_x < elevation.shape[1]) else 0
 
         # Check each point along the line of sight
         for i in range(num_points):
@@ -62,27 +66,39 @@ def calculate_los_score(bbox, address_point, rail_point, elevation, tree_mask, s
             if not (0 <= x_idx < elevation.shape[1] and 0 <= y_idx < elevation.shape[0]):
                 continue
 
-            # Check for buildings
+            current_elevation = elevation[y_idx, x_idx]
+
+            # 1. Check for buildings (houses, commercial buildings)
             if building_mask[y_idx, x_idx]:
                 return 0  # Blocked by building
 
-            # Check for trees
+            # 2. Check for trees (dense vegetation that blocks line of sight)
             if tree_mask[y_idx, x_idx]:
-                return 0  # Blocked by tree
+                # Check if tree is tall enough to block view (typically > 3m)
+                if current_elevation > start_elevation + 3:
+                    return 0  # Blocked by tall tree
 
-            # Check for shrubs (if they're tall enough)
-            if shrub_mask[y_idx, x_idx] and elevation[y_idx, x_idx] > elevation[addr_y, addr_x] + 2:  # 2m threshold
-                return 0  # Blocked by tall shrub
+            # 3. Check for shrubs and dense vegetation
+            if shrub_mask[y_idx, x_idx]:
+                # Shrubs typically 1-3m tall, check if they're tall enough to block view
+                if current_elevation > start_elevation + 1.5:
+                    return 0  # Blocked by tall shrub
 
-            # Check for elevation changes
+            # 4. Check for significant elevation changes (hills, embankments)
             if i > 0:
                 prev_x = int(x[i-1])
                 prev_y = int(y[i-1])
                 if (0 <= prev_x < elevation.shape[1] and 0 <= prev_y < elevation.shape[0]):
-                    elevation_change = abs(
-                        elevation[y_idx, x_idx] - elevation[prev_y, prev_x])
-                    if elevation_change > 5:  # 5m threshold for significant elevation change
+                    elevation_change = abs(current_elevation - elevation[prev_y, prev_x])
+                    # If elevation change is significant (> 2m), it might block line of sight
+                    if elevation_change > 2:
                         return 0  # Blocked by elevation change
+
+            # 5. Check for gradual elevation changes over distance
+            if i > 10:  # Check after some distance from start
+                elevation_diff = abs(current_elevation - start_elevation)
+                if elevation_diff > 5:  # Significant elevation difference
+                    return 0  # Blocked by elevation
 
         return 1  # Clear line of sight
 

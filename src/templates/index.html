@@ -30,8 +30,27 @@
         <h2>Line of Sight Analysis</h2>
         <p class="text-muted">Analyze line of sight between addresses and rail lines</p>
 
-        <!-- State Selection -->
+        <!-- Analysis Type Selection -->
         <div class="card mb-4">
+            <div class="card-body">
+                <h4>Analysis Type</h4>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="analysisType" id="stateAnalysis" value="state" checked>
+                    <label class="form-check-label" for="stateAnalysis">
+                        State-wide Analysis
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="analysisType" id="cityAnalysis" value="city">
+                    <label class="form-check-label" for="cityAnalysis">
+                        City-based Analysis
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- State Selection -->
+        <div class="card mb-4" id="stateSection">
             <div class="card-body">
                 <h4>Select State</h4>
                 <select class="form-control mb-3" id="stateSelect" required>
@@ -40,6 +59,32 @@
                     <option value="{{ abbr }}">{{ name }}</option>
                     {% endfor %}
                 </select>
+            </div>
+        </div>
+
+        <!-- City Selection -->
+        <div class="card mb-4" id="citySection" style="display: none;">
+            <div class="card-body">
+                <h4>Enter City and State</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control mb-3" id="cityInput" placeholder="Enter city name..." required>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-control mb-3" id="cityStateSelect" required>
+                            <option value="">Choose a state...</option>
+                            {% for abbr, name in states.items() %}
+                            <option value="{{ abbr }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analyze Button -->
+        <div class="card mb-4">
+            <div class="card-body">
                 <button class="btn btn-primary" id="analyzeBtn" disabled>
                     Run Analysis
                 </button>
@@ -111,19 +156,71 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Handle state selection
+        // Handle analysis type selection
+        document.querySelectorAll('input[name="analysisType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const analysisType = this.value;
+                if (analysisType === 'state') {
+                    document.getElementById('stateSection').style.display = 'block';
+                    document.getElementById('citySection').style.display = 'none';
+                    checkStateAnalysisReady();
+                } else {
+                    document.getElementById('stateSection').style.display = 'none';
+                    document.getElementById('citySection').style.display = 'block';
+                    checkCityAnalysisReady();
+                }
+            });
+        });
+
+        // Handle state selection for state analysis
         document.getElementById('stateSelect').addEventListener('change', function() {
-            const state = this.value;
-            if (state) {
-                // Enable the analyze button when state is selected
+            checkStateAnalysisReady();
+        });
+
+        // Handle city and state selection for city analysis
+        document.getElementById('cityInput').addEventListener('input', function() {
+            checkCityAnalysisReady();
+        });
+
+        document.getElementById('cityStateSelect').addEventListener('change', function() {
+            checkCityAnalysisReady();
+        });
+
+        function checkStateAnalysisReady() {
+            const state = document.getElementById('stateSelect').value;
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            
+            if (analysisType === 'state' && state) {
                 document.getElementById('analyzeBtn').disabled = false;
             } else {
                 document.getElementById('analyzeBtn').disabled = true;
             }
-        });
+        }
+
+        function checkCityAnalysisReady() {
+            const city = document.getElementById('cityInput').value.trim();
+            const state = document.getElementById('cityStateSelect').value;
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            
+            if (analysisType === 'city' && city && state) {
+                document.getElementById('analyzeBtn').disabled = false;
+            } else {
+                document.getElementById('analyzeBtn').disabled = true;
+            }
+        }
 
         // Handle analysis
         document.getElementById('analyzeBtn').addEventListener('click', async function() {
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            
+            if (analysisType === 'state') {
+                await runStateAnalysis();
+            } else {
+                await runCityAnalysis();
+            }
+        });
+
+        async function runStateAnalysis() {
             const state = document.getElementById('stateSelect').value;
             if (!state) {
                 alert('Please select a state.');
@@ -179,7 +276,6 @@
 
                     // Update download links
                     document.getElementById('downloadCsv').href = result.download_url;
-                    document.getElementById('download-clear-csv').href = result.clear_download_url;
 
                     // Show results
                     document.getElementById('results').style.display = 'block';
@@ -192,7 +288,65 @@
                 document.getElementById('error').textContent = 'Error during analysis: ' + error.message;
                 document.getElementById('error').style.display = 'block';
             }
-        });
+        }
+
+        async function runCityAnalysis() {
+            const city = document.getElementById('cityInput').value.trim();
+            const state = document.getElementById('cityStateSelect').value;
+            
+            if (!city || !state) {
+                alert('Please enter both city and state.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                // Run city analysis
+                const analysisData = {
+                    city: city,
+                    state: state
+                };
+
+                const response = await fetch('/analyze_city', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(analysisData)
+                });
+                const result = await response.json();
+
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+
+                if (response.ok) {
+                    // Update statistics
+                    document.getElementById('totalAddresses').textContent = result.statistics.total_addresses;
+                    document.getElementById('clearLos').textContent = result.statistics.clear_los;
+                    document.getElementById('blockedLos').textContent = result.statistics.blocked_los;
+                    document.getElementById('clearPercentage').textContent = 
+                        `${result.statistics.clear_percentage.toFixed(1)}%`;
+
+                    // Update download links
+                    document.getElementById('downloadCsv').href = result.download_url;
+
+                    // Show results
+                    document.getElementById('results').style.display = 'block';
+                } else {
+                    document.getElementById('error').textContent = result.error || 'Analysis failed';
+                    document.getElementById('error').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').textContent = 'Error during analysis: ' + error.message;
+                document.getElementById('error').style.display = 'block';
+            }
+        }
     </script>
 </body>
 </html> 
