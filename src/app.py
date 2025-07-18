@@ -661,12 +661,12 @@ def analyze_city():
         # Set up elevation provider
         elevation_provider = None
         if elevation_provider_name == 'opentopography':
-            from .elevation_providers import OpenTopographyProvider
-            elevation_provider = OpenTopographyProvider()
-            logging.info(f"Using OpenTopography for elevation data")
-        elif elevation_provider_name == 'google':
-            from .elevation_providers import GoogleElevationProvider
-            elevation_provider = GoogleElevationProvider()
+                    from elevation_providers import OpenTopographyProvider
+        elevation_provider = OpenTopographyProvider()
+        logging.info(f"Using OpenTopography for elevation data")
+    elif elevation_provider_name == 'google':
+        from elevation_providers import GoogleElevationProvider
+        elevation_provider = GoogleElevationProvider()
             logging.info(f"Using Google Elevation API for elevation data")
         
         # Process city LOS analysis

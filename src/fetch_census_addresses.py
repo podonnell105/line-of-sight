@@ -8,7 +8,7 @@ from tqdm import tqdm
 import shutil
 import time
 import numpy as np
-from .process_rail import fetch_rail_lines_in_bbox
+from process_rail import fetch_rail_lines_in_bbox
 import glob
 
 # Set up logging

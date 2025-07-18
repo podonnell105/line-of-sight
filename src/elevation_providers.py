@@ -10,7 +10,7 @@ class ElevationProvider(abc.ABC):
 
 class GoogleElevationProvider(ElevationProvider):
     def get_elevation_tif(self, bbox):
-        from .fetch_lidar import get_google_elevation
+        from fetch_lidar import get_google_elevation
         return get_google_elevation(bbox)
 
 class OpenTopographyProvider(ElevationProvider):
