@@ -1,0 +1,28 @@
+{
+"type": "FeatureCollection",
+"name": "uploaded_addresses",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "address": "3000, Dial Drive, Council Bluffs,  County, IA, 51501, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -95.8503051, 41.2303669 ] } },
+{ "type": "Feature", "properties": { "address": "610, 30th Avenue, Council Bluffs,  County, IA, 51501, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -95.8503547, 41.2313582 ] } },
+{ "type": "Feature", "properties": { "address": "110, North 2nd Avenue, Sheldon,  County, IA, 51201, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -95.8544994, 43.1866112 ] } },
+{ "type": "Feature", "properties": { "address": "210, North 2nd Avenue, Sheldon,  County, IA, 51201, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -95.8524938, 43.1890647 ] } },
+{ "type": "Feature", "properties": { "address": "110, Lincoln Street, Cedar Falls,  County, IA, 50613, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -92.4438228, 42.5402943 ] } },
+{ "type": "Feature", "properties": { "address": "103, Franklin Street, Cedar Falls,  County, IA, 50613, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -92.450128, 42.5376176 ] } },
+{ "type": "Feature", "properties": { "address": "103, Franklin Street, Cedar Falls,  County, IA, 50613, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -92.4498569, 42.53764420000001 ] } },
+{ "type": "Feature", "properties": { "address": "101, West 1st Street, Cedar Falls,  County, IA, 50613, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -92.4463193, 42.5382448 ] } },
+{ "type": "Feature", "properties": { "address": "430, Maple Street, Murray,  County, IA, 50174, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -93.951295699999989, 41.041706 ] } },
+{ "type": "Feature", "properties": { "address": "518, 5th Street, Murray,  County, IA, 50174, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -93.951813, 41.0415884 ] } },
+{ "type": "Feature", "properties": { "address": "429, Sherman Street, Murray,  County, IA, 50174, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -93.9532419, 41.0415978 ] } },
+{ "type": "Feature", "properties": { "address": "618, 5th Street, Murray,  County, IA, 50174, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -93.9528507, 41.0416538 ] } },
+{ "type": "Feature", "properties": { "address": "201, Vulcan Street, Sabula,  County, IA, 52070, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -90.1694676, 42.0643758 ] } },
+{ "type": "Feature", "properties": { "address": "230, South Avenue, Sabula,  County, IA, 52070, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -90.1697148, 42.0634844 ] } },
+{ "type": "Feature", "properties": { "address": "1013, Broad Street, Sabula,  County, IA, 52070, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -90.1702921, 42.0645285 ] } },
+{ "type": "Feature", "properties": { "address": "405, Vulcan Street, Sabula,  County, IA, 52070, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -90.172352, 42.0635388 ] } },
+{ "type": "Feature", "properties": { "address": "1109, Old Fish House Road, Sabula,  County, IA, 52070, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -90.1694003, 42.0637758 ] } },
+{ "type": "Feature", "properties": { "address": "700, 16th Avenue Southeast, Cedar Rapids,  County, IA, 52401, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -91.652199599999989, 41.9713159 ] } },
+{ "type": "Feature", "properties": { "address": "303, 8th Avenue Southeast, Cedar Rapids,  County, IA, 52401, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -91.66053359999998, 41.9739233 ] } },
+{ "type": "Feature", "properties": { "address": "316, 9th Avenue Southeast, Cedar Rapids,  County, IA, 52401, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -91.6600705, 41.9735915 ] } },
+{ "type": "Feature", "properties": { "address": "1215, 7th Street Southeast, Cedar Rapids,  County, IA, 52401, United States", "type": "residential" }, "geometry": { "type": "Point", "coordinates": [ -91.6531887, 41.9718742 ] } }
+]
+}

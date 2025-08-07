@@ -2,8 +2,9 @@
 
 # Large data files
 data/*
-web_data/*
-output/*
+
+
 .env
 src/__pycache__/*
 
+output/*

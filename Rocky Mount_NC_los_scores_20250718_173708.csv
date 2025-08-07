@@ -1,0 +1,19 @@
+address,city,state,zip5,coordinates,los_score,visibility_percentage,distance_to_railway
+101 West Nash Street,Whitakers,NC,27891,"36.103778, -77.714768",1,100.0,0.0
+104 Southwest Railroad Street,Whitakers,NC,27891,"36.105216, -77.713476",1,100.0,0.0
+102 Northwest Railroad Street,Whitakers,NC,27891,"36.105772, -77.712949",1,100.0,0.0
+101 Northeast Railroad Street,Whitakers,NC,27891,"36.105638, -77.712208",1,100.0,0.0
+105 Southeast Railroad Street,Whitakers,NC,27891,"36.105109, -77.712470",1,100.0,0.0
+106 W Pippen St,Whitakers,NC,27891,"36.106050, -77.713595",1,100.0,0.0
+101 Coastline Street,Rocky Mount,NC,27804,"35.938219, -77.797718",1,100.0,0.0
+301 South Church Street,Rocky Mount,NC,27804,"35.939641, -77.796952",1,100.0,0.0
+213 Southeast Main Street,Rocky Mount,NC,27801,"35.940653, -77.795657",1,100.0,0.0
+219 Southeast Main Street,Rocky Mount,NC,27801,"35.940562, -77.795690",1,100.0,0.0
+231 Southeast Main Street,Rocky Mount,NC,27801,"35.940199, -77.795541",1,100.0,0.0
+203 Southeast Main Street,Rocky Mount,NC,27801,"35.940848, -77.795592",1,100.0,0.0
+223 Southeast Main Street,Rocky Mount,NC,27801,"35.940469, -77.795727",1,100.0,0.0
+235 Southeast Main Street,Rocky Mount,NC,27801,"35.940134, -77.795571",1,100.0,0.0
+227 Southeast Main Street,Rocky Mount,NC,27801,"35.940338, -77.795767",1,100.0,0.0
+107 Southeast Main Street,Rocky Mount,NC,27801,"35.942015, -77.795141",1,100.0,0.0
+143 North Washington Street,Rocky Mount,NC,27801,"35.942731, -77.793516",1,100.0,0.0
+285 NE Main Street,Rocky Mount,NC,27801,"35.946052, -77.793454",1,100.0,0.0

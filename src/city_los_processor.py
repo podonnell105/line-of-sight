@@ -405,7 +405,23 @@ def fetch_addresses_in_bbox(bbox, city_name, state_abbr, rail_gdf=None):
     for query_idx, query in enumerate(queries):
         try:
             logging.info(f"Running address query {query_idx + 1} for bbox")
+            
+            # Rate limiting: 1 second delay between requests to respect OSM limits
+            if query_idx > 0:
+                time.sleep(1)
+                
             response = requests.post(overpass_url, data=query)
+            
+            # Check for rate limiting or server errors
+            if response.status_code == 429:  # Too Many Requests
+                logging.warning(f"Rate limited by Overpass API, waiting 60 seconds...")
+                time.sleep(60)
+                response = requests.post(overpass_url, data=query)
+            elif response.status_code == 503:  # Service Unavailable
+                logging.warning(f"Overpass API temporarily unavailable, waiting 30 seconds...")
+                time.sleep(30)
+                response = requests.post(overpass_url, data=query)
+                
             response.raise_for_status()
             data = response.json()
             
