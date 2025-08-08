@@ -480,9 +480,16 @@ def process_coordinate_location(lat, lon, location_name, elevation_provider):
                     
                     # Only include addresses within 100m of railway
                     if distance_to_railway <= 100:
-                        # Calculate LOS score
+                        # Calculate LOS score - pass parameters in correct order
                         los_score = calculate_definitive_los_score(
-                            addr_point, bbox_rail_gdf, elevation_data
+                            bbox,  # bbox_coords
+                            (addr_point.x, addr_point.y),  # addr_point as tuple
+                            bbox_rail_gdf,  # rail_gdf
+                            elevation_data,  # elevation
+                            None,  # tree_mask (not available)
+                            None,  # shrub_mask (not available) 
+                            None,  # building_mask (not available)
+                            None   # barriers (not available)
                         )
                         
                         # Add location info and results to address
